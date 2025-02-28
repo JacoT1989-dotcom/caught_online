@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 187 65% 53%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 84% 61%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 187 65% 93%;
+    --accent-foreground: 187 65% 23%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 187 65% 53%;
+    --radius: 0.75rem;
+    --header-height: 56px;
+    --banner-height: 28px;
+    --brand-blue: #41c8d2;
+  }
+
+  .dark {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 187 65% 53%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 84% 61%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 187 65% 23%;
+    --accent-foreground: 187 65% 93%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 187 65% 53%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+.font-lato {
+  font-family: var(--font-lato);
+}
+
+/* Hide shipping banner when class is present */
+.shipping-banner-hidden .shipping-banner {
+  display: none;
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-10deg); }
+  75% { transform: rotate(10deg); }
+}
+
+.animate-wiggle {
+  animation: wiggle 0.3s ease-in-out;
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* Remove focus rings from select components */
+[role="combobox"]:focus {
+  @apply outline-none ring-0 ring-offset-0;
+}
+
+[role="listbox"] {
+  @apply outline-none ring-0;
+}
+
+[role="option"] {
+  @apply outline-none ring-0 focus:ring-0;
+}
+
+/* Remove blue highlight on mobile tap */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Remove focus outline from select trigger */
+.select-trigger:focus {
+  @apply outline-none ring-0 ring-offset-0;
+}
+
+/* Remove focus styles from select content */
+.select-content {
+  @apply outline-none ring-0 ring-offset-0;
+}
+
+/* Remove focus styles from select items */
+.select-item {
+  @apply outline-none ring-0 focus:ring-0;
+}
+
+/* Remove focus outline from all select components */
+select:focus,
+[role="combobox"]:focus,
+[role="listbox"]:focus,
+[role="option"]:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  @apply ring-0 ring-offset-0;
+}
