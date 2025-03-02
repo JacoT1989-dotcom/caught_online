@@ -19,11 +19,12 @@ interface LocationEdge {
 }
 
 interface LocationsResponse {
-  data: {
-    locations: {
+  data?: {
+    locations?: {
       edges: LocationEdge[];
     };
   };
+  errors?: any[];
 }
 
 const LOCATIONS_QUERY = `
@@ -46,11 +47,18 @@ const LOCATIONS_QUERY = `
   }
 `;
 
+// Export config to mark this route as dynamic
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     // Check if the adminAccessToken exists
     if (!SHOPIFY_CONFIG.adminAccessToken) {
-      throw new Error("Shopify admin access token is not configured");
+      console.error("Shopify admin access token is not configured");
+      return NextResponse.json(
+        { error: "Shopify admin access token is not configured" },
+        { status: 500 }
+      );
     }
 
     const response = await fetch(SHOPIFY_CONFIG.endpoint, {
@@ -62,15 +70,43 @@ export async function GET() {
       body: JSON.stringify({
         query: LOCATIONS_QUERY,
       }),
+      // Remove the cache option or use next.js recommended pattern:
+      next: { revalidate: 0 }, // 0 means no cache (equivalent to "no-store")
     });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch locations");
+      const errorText = await response.text();
+      console.error(
+        `Shopify API responded with ${response.status}: ${errorText}`
+      );
+      return NextResponse.json(
+        { error: `Shopify API error: ${response.status}` },
+        { status: response.status }
+      );
     }
 
-    const data = (await response.json()) as LocationsResponse;
+    const jsonData = (await response.json()) as LocationsResponse;
+
+    // Check for GraphQL errors
+    if (jsonData.errors && jsonData.errors.length > 0) {
+      console.error("GraphQL errors:", JSON.stringify(jsonData.errors));
+      return NextResponse.json(
+        { error: "GraphQL errors from Shopify API" },
+        { status: 422 }
+      );
+    }
+
+    // Make sure we have the expected data structure
+    if (!jsonData.data?.locations?.edges) {
+      console.error("Unexpected data structure:", JSON.stringify(jsonData));
+      return NextResponse.json(
+        { error: "Invalid response structure from Shopify API" },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
-      data.data.locations.edges.map((edge: LocationEdge) => edge.node)
+      jsonData.data.locations.edges.map((edge: LocationEdge) => edge.node)
     );
   } catch (error) {
     console.error("Error fetching locations:", error);
