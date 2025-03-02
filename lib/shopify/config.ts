@@ -15,3 +15,5 @@ export const SHOPIFY_CONFIG = {
     return Boolean(this.domain && this.storefrontAccessToken);
   },
 } as const;
+
+//
