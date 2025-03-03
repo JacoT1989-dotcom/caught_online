@@ -1,4 +1,4 @@
-import { shopifyFetch } from './client';
+import { shopifyFetch } from "./client";
 
 const GET_PRODUCTS_QUERY = `
   query GetProducts(
@@ -205,40 +205,51 @@ export interface GetProductsOptions {
 // Helper to convert product sort key to collection sort key
 function getCollectionSortKey(sortKey: string): string {
   switch (sortKey) {
-    case 'PRICE':
-      return 'PRICE';
-    case 'BEST_SELLING':
-      return 'BEST_SELLING';
-    case 'CREATED':
-      return 'CREATED';
-    case 'TITLE':
-      return 'TITLE';
+    case "PRICE":
+      return "PRICE";
+    case "BEST_SELLING":
+      return "BEST_SELLING";
+    case "CREATED":
+      return "CREATED";
+    case "TITLE":
+      return "TITLE";
     default:
-      return 'BEST_SELLING';
+      return "BEST_SELLING";
   }
 }
 
 export async function getProducts(options: GetProductsOptions = {}) {
-  const { collection, first = 250, sortKey = 'BEST_SELLING', reverse = false, query = '' } = options;
+  const {
+    collection,
+    first = 250,
+    sortKey = "BEST_SELLING",
+    reverse = false,
+    query = "",
+  } = options;
 
   try {
-    console.log('Fetching products with options:', { collection, query, sortKey, reverse });
+    console.log("Fetching products with options:", {
+      collection,
+      query,
+      sortKey,
+      reverse,
+    });
 
     // Use different queries for collection vs all products
     if (collection) {
       const { data } = await shopifyFetch({
         query: GET_COLLECTION_PRODUCTS_QUERY,
-        variables: { 
+        variables: {
           handle: collection,
-          first, 
+          first,
           sortKey: getCollectionSortKey(sortKey),
-          reverse
+          reverse,
         },
-        cache: 'no-store'
+        // Remove cache: 'no-store' or use next: { revalidate: 3600 } for ISR
       });
 
       if (!data?.collection?.products?.edges) {
-        console.warn('No products found in collection');
+        console.warn("No products found in collection");
         return [];
       }
 
@@ -261,17 +272,17 @@ export async function getProducts(options: GetProductsOptions = {}) {
     // Get all products
     const { data } = await shopifyFetch({
       query: GET_PRODUCTS_QUERY,
-      variables: { 
-        first, 
+      variables: {
+        first,
         sortKey,
         reverse,
-        query
+        query,
       },
-      cache: 'no-store'
+      // Remove cache: 'no-store' or use next: { revalidate: 3600 } for ISR
     });
 
     if (!data?.products?.edges) {
-      console.warn('No products found');
+      console.warn("No products found");
       return [];
     }
 
@@ -289,32 +300,31 @@ export async function getProducts(options: GetProductsOptions = {}) {
       variants: node.variants,
       collections: node.collections,
     }));
-
   } catch (error) {
-    console.error('Error fetching products:', error);
+    console.error("Error fetching products:", error);
     return [];
   }
 }
 
 export async function getProduct(handle: string) {
   if (!handle) {
-    throw new Error('Product handle is required');
+    throw new Error("Product handle is required");
   }
 
   try {
-    console.log('Fetching product with handle:', handle);
+    console.log("Fetching product with handle:", handle);
 
     const { data } = await shopifyFetch({
       query: GET_PRODUCT_BY_HANDLE,
       variables: { handle },
-      cache: 'no-store'
+      // Remove cache: 'no-store' or use next: { revalidate: 3600 } for ISR
     });
 
-    console.log('Raw product API response:', data);
+    console.log("Raw product API response:", data);
 
     const product = data?.product;
     if (!product) {
-      console.log('Product not found:', handle);
+      console.log("Product not found:", handle);
       return null;
     }
 
@@ -333,7 +343,7 @@ export async function getProduct(handle: string) {
       collections: product.collections,
     };
   } catch (error) {
-    console.error('Error fetching product:', error);
+    console.error("Error fetching product:", error);
     return null;
   }
 }
