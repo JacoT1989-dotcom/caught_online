@@ -186,4 +186,4 @@ export default function AboutPage() {
   );
 }
 
-// Commit to production. Live APP
+// Commit to production.
