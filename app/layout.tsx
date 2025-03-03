@@ -42,37 +42,39 @@ export default function RootLayout({
           enableSystem={false}
           storageKey="caught-online-theme"
         >
-          <div className="relative min-h-screen">
-            {/* Header */}
-            <div className="sticky top-0 z-50 space-y-2 bg-background">
-              <ShippingBanner />
-              <div className="hidden md:block max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
-                <SiteHeader />
+          <AuthProvider>
+            <div className="relative min-h-screen">
+              {/* Header */}
+              <div className="sticky top-0 z-50 space-y-2 bg-background">
+                <ShippingBanner />
+                <div className="hidden md:block max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+                  <SiteHeader />
+                </div>
+                <div className="md:hidden">
+                  <MobileHeader />
+                </div>
               </div>
+
+              {/* Main Content */}
+              <main className="md:max-w-[1440px] md:mx-auto md:px-4 sm:px-6 lg:px-8 pb-24 md:pb-0">
+                {children}
+              </main>
+
+              {/* Footer */}
+              <div className="hidden md:block">
+                <SiteFooter />
+              </div>
+
+              {/* Mobile Navigation */}
               <div className="md:hidden">
-                <MobileHeader />
+                <MobileNav />
               </div>
+
+              {/* Overlays and Modals */}
+              <Toaster />
+              {/* <RegionPrompt /> */}
             </div>
-
-            {/* Main Content */}
-            <main className="md:max-w-[1440px] md:mx-auto md:px-4 sm:px-6 lg:px-8 pb-24 md:pb-0">
-              {children}
-            </main>
-
-            {/* Footer */}
-            <div className="hidden md:block">
-              <SiteFooter />
-            </div>
-
-            {/* Mobile Navigation */}
-            <div className="md:hidden">
-              <MobileNav />
-            </div>
-
-            {/* Overlays and Modals */}
-            <Toaster />
-            {/* <RegionPrompt /> */}
-          </div>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
