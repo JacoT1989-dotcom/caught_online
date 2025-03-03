@@ -81,7 +81,7 @@ export default function HowItWorksPage() {
           <p className="text-lg text-muted-foreground">
             Whether you prefer a one-time order or regular deliveries, we make
             it easy to get premium seafood delivered directly to your door.
-            Here`&apos;`s everything you need to know about ordering from Caught
+            Here&apos;s everything you need to know about ordering from Caught
             Online.
           </p>
         </div>
@@ -94,7 +94,7 @@ export default function HowItWorksPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">One-Time Orders</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Want to try us out first? Here`&apos;`s how to place a single
+              Want to try us out first? Here&apos;s how to place a single
               order
             </p>
           </div>

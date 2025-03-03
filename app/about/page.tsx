@@ -77,23 +77,23 @@ export default function AboutPage() {
               Caught Online started back in 2018 with two step-brothers, Calvin
               Davis and Gareth Anderson, a dream, and a whole lot of fish in
               cooler boxes. From delivering out of our cars at the cottage at
-              our parents`&apos;` house, we`&apos;`ve grown into South
-              Africa`&apos;`s go-to seafood delivery service. But no matter how
-              far we`&apos;`ve come, we`&apos;`ve never forgotten our humble
+              our parents&apos; house, we&apos;ve grown into South
+              Africa&apos;s go-to seafood delivery service. But no matter how
+              far we&apos;ve come, we&apos;ve never forgotten our humble
               beginnings.
             </p>
             <p>
               Today, we proudly serve Cape Town, Johannesburg, Pretoria, and
               even make special Friday deliveries in Durban, plus the Garden
               Route and the Winelands. With over 20,000 happy customers and a
-              5-star reputation, we`&apos;`re all about bringing the freshest,
+              5-star reputation, we&apos;re all about bringing the freshest,
               most delicious seafood straight to your door.
             </p>
             <p>
-              Whether it`&apos;`s tender kingklip, melt-in-your-mouth salmon, or
+              Whether it&apos;s tender kingklip, melt-in-your-mouth salmon, or
               a feast-worthy selection, every order is handled with the same
               passion we had when we first started. Because at Caught Online,
-              it`&apos;`s not just about seafood—it`&apos;`s about delivering
+              it&apos;s not just about seafood—it&apos;s about delivering
               quality, every time.
             </p>
             <p className="font-medium">

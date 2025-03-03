@@ -32,7 +32,7 @@ export default function PrivacyPage() {
                 products that you view, what websites or search terms referred
                 you to the Site, and information about how you interact with the
                 Site. We refer to this automatically-collected information as
-                `&ldquo;`Device Information`&ldquo;`.
+                &ldquo;Device Information&ldquo;.
               </p>
 
               <div>
@@ -42,19 +42,19 @@ export default function PrivacyPage() {
                 </p>
                 <ul className="list-disc list-inside ml-4 space-y-2">
                   <li>
-                    `&ldquo;`Cookies`&ldquo;` are data files that are placed on
+                    &ldquo;Cookies&ldquo; are data files that are placed on
                     your device or computer and often include an anonymous
                     unique identifier.
                   </li>
                   <li>
-                    `&ldquo;`Log files`&ldquo;` track actions occurring on the
+                    &ldquo;Log files&ldquo; track actions occurring on the
                     Site, and collect data including your IP address, browser
                     type, Internet service provider, referring/exit pages, and
                     date/time stamps.
                   </li>
                   <li>
-                    `&ldquo;`Web beacons`&ldquo;`, `&ldquo;`tags`&ldquo;`, and
-                    `&ldquo;`pixels`&ldquo;` are electronic files used to record
+                    &ldquo;Web beacons&ldquo;, &ldquo;tags&ldquo;, and
+                    &ldquo;pixels&ldquo; are electronic files used to record
                     information about how you browse the Site.
                   </li>
                 </ul>
