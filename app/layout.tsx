@@ -10,11 +10,14 @@ import { lato } from "./fonts";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/components/auth/auth-provider";
-import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { RegionPrompt } from "@/components/cart/region-prompt";
-
 import { CartIntegration } from "./cartIntegration";
+import {
+  getGTMNoScript,
+  initAnalytics,
+} from "./../components/analytics/analytics-script";
+import Script from "next/script";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -31,11 +34,26 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head />
+      <head>
+        <Script
+          id="analytics-script"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: initAnalytics(),
+          }}
+        />
+      </head>
       <body
         suppressHydrationWarning
         className={`${inter.className} ${lato.variable}`}
       >
+        {/* GTM noscript iframe */}
+        <noscript
+          dangerouslySetInnerHTML={{
+            __html: getGTMNoScript(),
+          }}
+        />
+
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
@@ -44,39 +62,35 @@ export default function RootLayout({
         >
           <QueryProvider>
             <AuthProvider>
-            <CartIntegration>
-                  <div className="relative min-h-screen">
-                    {/* Header */}
-                    <div className="sticky top-0 z-50 space-y-2 bg-background">
-                      <ShippingBanner />
-                      <div className="hidden md:block max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
-                        <SiteHeader />
-                      </div>
-                      <div className="md:hidden">
-                        <MobileHeader />
-                      </div>
+              <CartIntegration>
+                <div className="relative min-h-screen">
+                  {/* Header */}
+                  <div className="sticky top-0 z-50 space-y-2 bg-background">
+                    <ShippingBanner />
+                    <div className="hidden md:block max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+                      <SiteHeader />
                     </div>
-
-                    {/* Main Content */}
-                    <main className="md:max-w-[1440px] md:mx-auto md:px-4 sm:px-6 lg:px-8 pb-24 md:pb-0">
-                      {children}
-                    </main>
-
-                    {/* Footer */}
-                    <div className="hidden md:block">
-                      <SiteFooter />
-                    </div>
-
-                    {/* Mobile Navigation */}
                     <div className="md:hidden">
-                      <MobileNav />
+                      <MobileHeader />
                     </div>
-
-                    {/* Overlays and Modals */}
-                    <Toaster />
-                    {/* <RegionPrompt /> */}
                   </div>
-                </CartIntegration>
+                  {/* Main Content */}
+                  <main className="md:max-w-[1440px] md:mx-auto md:px-4 sm:px-6 lg:px-8 pb-24 md:pb-0">
+                    {children}
+                  </main>
+                  {/* Footer */}
+                  <div className="hidden md:block">
+                    <SiteFooter />
+                  </div>
+                  {/* Mobile Navigation */}
+                  <div className="md:hidden">
+                    <MobileNav />
+                  </div>
+                  {/* Overlays and Modals */}
+                  <Toaster />
+                  {/* <RegionPrompt /> */}
+                </div>
+              </CartIntegration>
             </AuthProvider>
           </QueryProvider>
         </ThemeProvider>

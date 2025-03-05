@@ -1,10 +1,11 @@
 "use client";
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useCart, CartItem } from "@/hooks/use-cart";
 import { toast } from "sonner";
 import { ShoppingCart } from "lucide-react";
+import { trackAddToCart } from "@/lib/analytics/gtm";
+import { trackAddToCart as trackPixelAddToCart } from "@/lib/analytics/pixel";
 
 // Define proper types for product and variant
 interface ProductVariant {
@@ -61,13 +62,30 @@ export function AddToCartButton({ product, variant }: AddToCartButtonProps) {
 
       addItem(item);
 
+      // Track with GTM
+      const trackableProduct = {
+        id: product.id,
+        title: product.title,
+        price: parseFloat(variant.price || product.price),
+      };
+
+      // Track in GTM
+      trackAddToCart(trackableProduct);
+
+      // Track in Meta Pixel
+      trackPixelAddToCart(trackableProduct);
+
+      // Use the global tracking function if available
+      if (typeof window !== "undefined" && window.trackAddToCart) {
+        window.trackAddToCart(trackableProduct);
+      }
+
       toast.success("Added to cart", {
         description: product.title,
       });
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
-
       toast.error("Failed to add to cart");
     } finally {
       setIsAdding(false);

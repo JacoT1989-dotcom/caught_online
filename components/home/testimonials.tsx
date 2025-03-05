@@ -16,8 +16,8 @@ export function Testimonials() {
             What Our Customers Say
           </h2>
           <p className="text-base text-muted-foreground max-w-2xl mx-auto mb-4">
-            Don`&apos;`t just take our word for it. Here`&apos;`s what our
-            customers have to say about their experiences.
+            Don&apos;t just take our word for it. Here&apos;s what our customers
+            have to say about their experiences.
           </p>
 
           {/* Stamped.io Reviews Badge */}

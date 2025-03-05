@@ -155,12 +155,6 @@ export function CheckoutDialog(): JSX.Element {
     try {
       setIsLoading(true);
 
-      // Debug - Log the cart items before checkout
-      console.log(
-        "Cart items before checkout:",
-        JSON.stringify(items, null, 2)
-      );
-
       // Import the function to get valid variant IDs
       const { getValidCartItems } = await import(
         "@/lib/shopify/product-variant"
@@ -188,6 +182,43 @@ export function CheckoutDialog(): JSX.Element {
       const checkout = await createCheckout(processedItems);
 
       if (checkout?.webUrl) {
+        // Generate a temporary order ID for tracking
+        const tempOrderId = `temp-${Date.now()}`;
+
+        // Track in dataLayer directly
+        if (typeof window !== "undefined" && window.dataLayer) {
+          window.dataLayer.push({
+            event: "purchase",
+            ecommerce: {
+              transaction_id: tempOrderId,
+              value: total,
+              currency: "ZAR",
+              items: processedItems.map((item) => ({
+                item_id: item.id,
+                item_name: item.title,
+                price: item.price,
+                quantity: item.quantity,
+                currency: "ZAR",
+              })),
+            },
+          });
+        }
+
+        // Track purchase in Meta Pixel
+        if (typeof window !== "undefined" && window.fbq) {
+          window.fbq("track", "Purchase", {
+            value: total,
+            currency: "ZAR",
+            order_id: tempOrderId,
+          });
+        }
+
+        // Use global function if available
+        if (typeof window !== "undefined" && window.trackPurchase) {
+          window.trackPurchase(total, tempOrderId);
+        }
+
+        // Redirect to Shopify checkout
         window.location.href = checkout.webUrl;
       } else {
         throw new Error("No checkout URL received");
