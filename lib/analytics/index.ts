@@ -87,19 +87,19 @@ const config = {
 /**
  * Log analytics events when in debug mode
  */
-// function debugLog(eventName: string, eventData: any): void {
-//   if (
-//     typeof window !== "undefined" &&
-//     (window.DEBUG_ANALYTICS || config.DEBUG)
-//   ) {
-//     console.group(`📊 Analytics Event: ${eventName}`);
-//     console.log("Data:", eventData);
-//     console.log("GTM Active:", !!window.dataLayer);
-//     console.log("Pixel Active:", !!window.fbq);
-//     console.log("Shopify Active:", !!window.ShopifyAnalytics?.lib);
-//     console.groupEnd();
-//   }
-// }
+function debugLog(eventName: string, eventData: any): void {
+  if (
+    typeof window !== "undefined" &&
+    (window.DEBUG_ANALYTICS || config.DEBUG)
+  ) {
+    console.group(`📊 Analytics Event: ${eventName}`);
+    console.log("Data:", eventData);
+    console.log("GTM Active:", !!window.dataLayer);
+    console.log("Pixel Active:", !!window.fbq);
+    console.log("Shopify Active:", !!window.ShopifyAnalytics?.lib);
+    console.groupEnd();
+  }
+}
 
 /**
  * Initialize all analytics platforms
@@ -161,9 +161,9 @@ export function initAnalytics(): string {
             });
           }
           
-        //   if (window.DEBUG_ANALYTICS) {
-        //     console.log('📊 Page View tracked', window.location.pathname);
-        //   }
+          if (window.DEBUG_ANALYTICS) {
+            console.log('📊 Page View tracked', window.location.pathname);
+          }
         } catch (error) {
           console.error('Analytics error:', error);
         }
@@ -172,10 +172,10 @@ export function initAnalytics(): string {
       window.trackAddToCart = function(product) {
         try {
           // Validate product
-        //   if (!product || !product.id || !product.title) {
-        //     console.error('Invalid product data for trackAddToCart', product);
-        //     return;
-        //   }
+          if (!product || !product.id || !product.title) {
+            console.error('Invalid product data for trackAddToCart', product);
+            return;
+          }
           
           // Normalize data
           const itemData = {
@@ -263,9 +263,9 @@ export function initAnalytics(): string {
             });
           }
           
-        //   if (window.DEBUG_ANALYTICS) {
-        //     console.log('📊 View Content tracked', product);
-        //   }
+          if (window.DEBUG_ANALYTICS) {
+            console.log('📊 View Content tracked', product);
+          }
         } catch (error) {
           console.error('Analytics error:', error);
         }
@@ -306,9 +306,9 @@ export function initAnalytics(): string {
             });
           }
           
-        //   if (window.DEBUG_ANALYTICS) {
-        //     console.log('📊 Initiate Checkout tracked', { value, items });
-        //   }
+          if (window.DEBUG_ANALYTICS) {
+            console.log('📊 Initiate Checkout tracked', { value, items });
+          }
         } catch (error) {
           console.error('Analytics error:', error);
         }
@@ -352,9 +352,9 @@ export function initAnalytics(): string {
             });
           }
           
-        //   if (window.DEBUG_ANALYTICS) {
-        //     console.log('📊 Purchase tracked', { value, orderId, items });
-        //   }
+          if (window.DEBUG_ANALYTICS) {
+            console.log('📊 Purchase tracked', { value, orderId, items });
+          }
         } catch (error) {
           console.error('Analytics error:', error);
         }
@@ -410,7 +410,7 @@ export function trackPageView(): void {
       }
     }
 
-    // debugLog("PageView", { path: window.location.pathname });
+    debugLog("PageView", { path: window.location.pathname });
   } catch (error) {
     console.error("Failed to track page view:", error);
   }
@@ -452,7 +452,7 @@ export function trackAddToCart(product: TrackableProduct): void {
       }
     }
 
-    // debugLog("AddToCart", product);
+    debugLog("AddToCart", product);
   } catch (error) {
     console.error("Failed to track add to cart:", error);
   }
@@ -493,7 +493,7 @@ export function trackViewContent(product: TrackableProduct): void {
       }
     }
 
-    // debugLog("ViewContent", product);
+    debugLog("ViewContent", product);
   } catch (error) {
     console.error("Failed to track view content:", error);
   }
@@ -535,7 +535,7 @@ export function trackInitiateCheckout(
       }
     }
 
-    // debugLog("InitiateCheckout", { value, items });
+    debugLog("InitiateCheckout", { value, items });
   } catch (error) {
     console.error("Failed to track initiate checkout:", error);
   }
@@ -580,7 +580,7 @@ export function trackPurchase(
       }
     }
 
-    // debugLog("Purchase", { value, orderId, items });
+    debugLog("Purchase", { value, orderId, items });
   } catch (error) {
     console.error("Failed to track purchase:", error);
   }
@@ -609,7 +609,7 @@ export function trackSubscription(plan: string, value: number): void {
       });
     }
 
-    // debugLog("Subscription", { plan, value });
+    debugLog("Subscription", { plan, value });
   } catch (error) {
     console.error("Failed to track subscription:", error);
   }
