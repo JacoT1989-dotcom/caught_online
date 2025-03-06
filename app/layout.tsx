@@ -11,13 +11,11 @@ import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { QueryProvider } from "@/providers/query-provider";
-import { RegionPrompt } from "@/components/cart/region-prompt";
+
 import { CartIntegration } from "./cartIntegration";
-import {
-  getGTMNoScript,
-  initAnalytics,
-} from "./../components/analytics/analytics-script";
+
 import Script from "next/script";
+import { getGTMNoScript, initAnalytics } from "@/lib/analytics";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -43,10 +41,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body
-        suppressHydrationWarning
-        className={`${inter.className} ${lato.variable}`}
-      >
+      <body className={`${inter.className} ${lato.variable}`}>
         {/* GTM noscript iframe */}
         <noscript
           dangerouslySetInnerHTML={{
@@ -88,7 +83,6 @@ export default function RootLayout({
                   </div>
                   {/* Overlays and Modals */}
                   <Toaster />
-                  {/* <RegionPrompt /> */}
                 </div>
               </CartIntegration>
             </AuthProvider>

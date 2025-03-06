@@ -1,44 +1,38 @@
 "use client";
-
 import { useCallback } from "react";
 import {
-  trackAddToCart as trackGTMAddToCart,
-  trackViewItem as trackGTMViewItem,
-  trackBeginCheckout as trackGTMBeginCheckout,
-} from "@/lib/analytics/gtm";
-import {
-  trackAddToCart as trackPixelAddToCart,
+  trackAddToCart,
   trackViewContent,
   trackInitiateCheckout,
   trackPurchase,
-  trackSubscriptionStart,
-} from "@/lib/analytics/pixel";
+  trackSubscription,
+} from "@/lib/analytics"; // Import from the unified module
 
 export function useAnalytics() {
   const logAddToCart = useCallback((product: any) => {
-    // Track in both GTM and Pixel
-    trackGTMAddToCart(product);
-    trackPixelAddToCart(product);
+    // Now just one call needed
+    trackAddToCart(product);
   }, []);
 
   const logViewItem = useCallback((product: any) => {
-    // Track in both GTM and Pixel
-    trackGTMViewItem(product);
+    // Now just one call needed
     trackViewContent(product);
   }, []);
 
   const logBeginCheckout = useCallback((items: any[], total: number) => {
-    // Track in both GTM and Pixel
-    trackGTMBeginCheckout(items, total);
-    trackInitiateCheckout(total);
+    // Now just one call needed
+    trackInitiateCheckout(total, items);
   }, []);
 
-  const logPurchase = useCallback((orderId: string, total: number) => {
-    trackPurchase(total, orderId);
-  }, []);
+  const logPurchase = useCallback(
+    (orderId: string, total: number, items?: any[]) => {
+      trackPurchase(total, orderId, items);
+    },
+    []
+  );
 
   const logSubscriptionStart = useCallback((plan: string, value: number) => {
-    trackSubscriptionStart(plan, value);
+    trackSubscription(plan, value);
   }, []);
 
   return {

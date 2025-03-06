@@ -12,8 +12,7 @@ import { formatPrice } from "@/lib/utils";
 import { FREE_SHIPPING_THRESHOLD } from "@/lib/constants/cart";
 import Link from "next/link";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { trackBeginCheckout } from "@/lib/analytics/gtm";
-import { trackInitiateCheckout } from "@/lib/analytics/pixel";
+import { trackInitiateCheckout } from "@/lib/analytics";
 
 interface CartContentProps {
   onClose: () => void;
@@ -109,8 +108,8 @@ export function CartContent({ onClose }: CartContentProps) {
           onClick={() => {
             onClose();
             setIsCheckoutOpen(true);
-            trackBeginCheckout(items, total);
-            trackInitiateCheckout(total);
+
+            trackInitiateCheckout(total, items);
             if (typeof window !== "undefined" && window.trackInitiateCheckout) {
               window.trackInitiateCheckout(total);
             }

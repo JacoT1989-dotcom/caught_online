@@ -1,40 +1,24 @@
 "use client";
-
 import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { initGTM } from "@/lib/analytics/gtm";
-import { initPixel, trackPageView } from "@/lib/analytics/pixel";
-
-// Add type declaration for window.dataLayer
-declare global {
-  interface Window {
-    dataLayer?: any[];
-  }
-}
+import { initAnalytics, trackPageView } from "@/lib/analytics";
+import { initShopifyAnalytics } from "@/lib/analytics/shopify";
 
 export function AnalyticsClient() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Initialize analytics on first load
-    initGTM();
-    initPixel();
+    // Initialize Shopify analytics (initAnalytics is handled in layout.tsx script)
+    initShopifyAnalytics();
+
+    // Log initial page view
+    trackPageView();
   }, []);
 
   useEffect(() => {
-    // Track page views
-    if (typeof window !== "undefined") {
-      // GTM page view
-      window.dataLayer?.push({
-        event: "page_view",
-        page: {
-          path: pathname,
-          search: searchParams.toString(),
-          title: document.title,
-        },
-      });
-      // Meta Pixel page view
+    // Track page changes
+    if (pathname) {
       trackPageView();
     }
   }, [pathname, searchParams]);

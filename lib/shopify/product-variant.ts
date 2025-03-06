@@ -46,10 +46,10 @@ export async function getValidVariantId(
     });
 
     // Check if product and variants exist
-    if (!data?.product?.variants?.edges?.length) {
-      console.warn(`No variants found for product: ${productId}`);
-      return null;
-    }
+    // if (!data?.product?.variants?.edges?.length) {
+    //   console.warn(`No variants found for product: ${productId}`);
+    //   return null;
+    // }
 
     // Find the first available variant
     const variants = data.product.variants.edges;

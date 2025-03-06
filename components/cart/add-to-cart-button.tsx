@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { useCart, CartItem } from "@/hooks/use-cart";
 import { toast } from "sonner";
 import { ShoppingCart } from "lucide-react";
-import { trackAddToCart } from "@/lib/analytics/gtm";
-import { trackAddToCart as trackPixelAddToCart } from "@/lib/analytics/pixel";
+import { trackAddToCart } from "@/lib/analytics";
+import { syncCartWithShopify } from "@/lib/shopify/cart-sync";
 
 // Define proper types for product and variant
 interface ProductVariant {
@@ -35,7 +35,7 @@ export function AddToCartButton({ product, variant }: AddToCartButtonProps) {
   const [isAdding, setIsAdding] = useState(false);
   const { addItem } = useCart();
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     setIsAdding(true);
 
     try {
@@ -68,12 +68,27 @@ export function AddToCartButton({ product, variant }: AddToCartButtonProps) {
         title: product.title,
         price: parseFloat(variant.price || product.price),
       };
+      trackAddToCart({
+        id: product.id,
+        title: product.title,
+        price: parseFloat(variant.price || product.price),
+        variantId: variant.id,
+        quantity: 1,
+      });
+
+      await syncCartWithShopify([
+        {
+          variantId: variant.id,
+          quantity: 1,
+        },
+      ]);
+
+      toast.success("Added to cart", {
+        description: product.title,
+      });
 
       // Track in GTM
       trackAddToCart(trackableProduct);
-
-      // Track in Meta Pixel
-      trackPixelAddToCart(trackableProduct);
 
       // Use the global tracking function if available
       if (typeof window !== "undefined" && window.trackAddToCart) {

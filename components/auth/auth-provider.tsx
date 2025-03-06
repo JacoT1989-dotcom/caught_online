@@ -20,14 +20,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       ? `user-${user?.id || "unknown"}`
       : "logged-out";
 
-    console.log(
-      `[Auth] Auth state: ${currentAuthState}, Previous: ${prevAuthState}`
-    );
-
     // Handle login (when previously logged out)
     if (isAuthenticated && user?.id && prevAuthState === "logged-out") {
-      console.log(`[Auth] User logged in: ${user.id}`);
-
       // Load user's saved cart directly from localStorage
       try {
         const storageKey = `user-cart-${user.id}`;
@@ -46,13 +40,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
               if (!item.variantId) {
                 // Use the getVariantIdFromProductId function or a similar approach
                 item.variantId = item.id;
-                console.warn(`[Auth] Adding variantId to item: ${item.title}`);
               }
               cart.addItem(item as CartItem);
             });
           }
-        } else {
-          console.log(`[Auth] No saved cart found for user: ${user.id}`);
         }
       } catch (error) {
         console.error("[Auth] Error loading user cart:", error);
@@ -61,8 +52,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Handle logout (when previously logged in)
     if (!isAuthenticated && prevAuthState && prevAuthState !== "logged-out") {
-      console.log("[Auth] User logged out");
-
       // Clear the cart on logout
       cart.clearCart();
     }
@@ -83,9 +72,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         };
 
         localStorage.setItem(storageKey, JSON.stringify(cartData));
-        console.log(
-          `[Auth] Saved ${cart.items.length} items to user cart storage`
-        );
       } catch (error) {
         console.error("[Auth] Error saving cart to user storage:", error);
       }

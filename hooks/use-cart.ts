@@ -81,7 +81,7 @@ export const useCart = create<CartStore>()(
           items: itemsWithVariantIds,
         });
 
-        console.log("Fixed variant IDs for cart items:", itemsWithVariantIds);
+        // console.log("Fixed variant IDs for cart items:", itemsWithVariantIds);
       },
 
       addItem: (item) => {
@@ -172,7 +172,7 @@ export const useCart = create<CartStore>()(
       onRehydrateStorage: () => (state) => {
         // Fix variant IDs after rehydration
         if (state) {
-          console.log("[Cart] Rehydrated from storage");
+          // console.log("[Cart] Rehydrated from storage");
           // Schedule a fix for the next tick to ensure we have the full state
           setTimeout(() => {
             state.ensureVariantIds();
@@ -211,7 +211,7 @@ function saveCartToUserStorage(cartState: CartState): void {
 
     const storageKey = `user-cart-${userId}`;
     localStorage.setItem(storageKey, JSON.stringify(cartState));
-    console.log(`[Cart] Saved to user storage: ${storageKey}`);
+    // console.log(`[Cart] Saved to user storage: ${storageKey}`);
   } catch (error) {
     console.error("Error saving user cart:", error);
   }
@@ -231,7 +231,7 @@ export function loadUserCart(): CartState | null {
     if (!savedCart) return null;
 
     const parsedCart = JSON.parse(savedCart);
-    console.log(`[Cart] Loaded from user storage: ${storageKey}`);
+    // console.log(`[Cart] Loaded from user storage: ${storageKey}`);
 
     return parsedCart;
   } catch (error) {
@@ -248,7 +248,7 @@ export function clearCartOnLogout(): void {
     const cart = useCart.getState();
     cart.clearCart();
 
-    console.log("[Cart] Cleared on logout");
+    // console.log("[Cart] Cleared on logout");
   } catch (error) {
     console.error("Error clearing cart on logout:", error);
   }

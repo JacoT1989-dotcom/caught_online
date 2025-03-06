@@ -25,8 +25,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { trackViewItem } from "@/lib/analytics/gtm";
-import { trackViewContent } from "@/lib/analytics/pixel";
+import { trackViewContent } from "@/lib/analytics";
 
 const subscriptionOptions = [
   { value: "monthly", label: "Monthly", discount: 0.1 },
@@ -79,14 +78,13 @@ export function QuickView({ product, open, onOpenChange }: QuickViewProps) {
 
   useEffect(() => {
     if (product) {
-      // Track with the correct function names
-      trackViewItem(product);
-      trackViewContent(product);
-
-      // Global function as fallback
-      if (typeof window !== "undefined" && window.trackViewContent) {
-        window.trackViewContent(product);
-      }
+      // Track view content (unified)
+      trackViewContent({
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        variantId: product.variantId,
+      });
     }
   }, [product]);
 
