@@ -1,7 +1,3 @@
-// src/lib/analytics/index.ts
-// Unified analytics implementation that handles GTM, Meta Pixel and Shopify Analytics
-
-// Define shared types for tracking events
 export interface TrackableProduct {
   id: string;
   title: string;

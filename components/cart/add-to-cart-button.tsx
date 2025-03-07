@@ -87,9 +87,6 @@ export function AddToCartButton({ product, variant }: AddToCartButtonProps) {
         description: product.title,
       });
 
-      // Track in GTM
-      trackAddToCart(trackableProduct);
-
       // Use the global tracking function if available
       if (typeof window !== "undefined" && window.trackAddToCart) {
         window.trackAddToCart(trackableProduct);

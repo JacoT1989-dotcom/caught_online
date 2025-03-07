@@ -8,6 +8,7 @@ import { useCartRegion } from "@/hooks/use-cart-region";
 import { useInventory } from "@/hooks/use-inventory";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { trackAddToCart } from "@/lib/analytics";
 
 interface AddToCartButtonProps {
   product: {
@@ -53,12 +54,23 @@ export function AddToCartButton({
         return;
       }
 
-      addItem({
+      const item = {
         id: product.id,
         variantId: product.id, // Added the required variantId property
         title: product.title,
         price: product.price,
         image: product.image,
+        quantity: 1,
+      };
+
+      addItem(item);
+
+      // Add analytics tracking here
+      trackAddToCart({
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        variantId: product.id,
         quantity: 1,
       });
 
