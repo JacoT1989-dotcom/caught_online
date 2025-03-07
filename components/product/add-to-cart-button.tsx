@@ -36,6 +36,10 @@ export function AddToCartButton({
 
   useEffect(() => {
     checkProductInventory(product.handle);
+    // At the top of your component or in a useEffect
+    if (typeof window !== "undefined") {
+      window.DEBUG_ANALYTICS = true;
+    }
   }, [product.handle, checkProductInventory]);
 
   const handleAddToCart = async () => {

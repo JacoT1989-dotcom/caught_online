@@ -35,9 +35,76 @@ export function AddToCartButton({ product, variant }: AddToCartButtonProps) {
   const [isAdding, setIsAdding] = useState(false);
   const { addItem } = useCart();
 
+  // const handleAddToCart = async () => {
+  //   setIsAdding(true);
+
+  //   try {
+  //     // Ensure we have a valid variantId
+  //     if (!variant?.id) {
+  //       console.error("Product variant ID is missing", { product, variant });
+  //       toast.error("Could not add to cart", {
+  //         description: "Product information is incomplete",
+  //       });
+  //       return;
+  //     }
+
+  //     const item: CartItem = {
+  //       id: product.id,
+  //       title: product.title,
+  //       price: parseFloat(variant.price || product.price),
+  //       originalPrice: variant.compareAtPrice
+  //         ? parseFloat(variant.compareAtPrice)
+  //         : undefined,
+  //       image: product.featuredImage?.url || product.images?.[0]?.url || "",
+  //       quantity: 1,
+  //       variantId: variant.id, // Ensure this is the Shopify variant ID
+  //     };
+
+  //     addItem(item);
+
+  //     // Track with GTM
+  //     const trackableProduct = {
+  //       id: product.id,
+  //       title: product.title,
+  //       price: parseFloat(variant.price || product.price),
+  //     };
+  //     trackAddToCart({
+  //       id: product.id,
+  //       title: product.title,
+  //       price: parseFloat(variant.price || product.price),
+  //       variantId: variant.id,
+  //       quantity: 1,
+  //     });
+  //     await syncCartWithShopify([
+  //       {
+  //         variantId: variant.id,
+  //         quantity: 1,
+  //       },
+  //     ]);
+
+  //     toast.success("Added to cart", {
+  //       description: product.title,
+  //     });
+
+  //     // Use the global tracking function if available
+  //     // if (typeof window !== "undefined" && window.trackAddToCart) {
+  //     //   window.trackAddToCart(trackableProduct);
+  //     // }
+
+  //     toast.success("Added to cart", {
+  //       description: product.title,
+  //     });
+  //   } catch (error) {
+  //     const errorMessage =
+  //       error instanceof Error ? error.message : "Unknown error";
+  //     toast.error("Failed to add to cart");
+  //   } finally {
+  //     setIsAdding(false);
+  //   }
+  // };
+
   const handleAddToCart = async () => {
     setIsAdding(true);
-
     try {
       // Ensure we have a valid variantId
       if (!variant?.id) {
@@ -57,17 +124,12 @@ export function AddToCartButton({ product, variant }: AddToCartButtonProps) {
           : undefined,
         image: product.featuredImage?.url || product.images?.[0]?.url || "",
         quantity: 1,
-        variantId: variant.id, // Ensure this is the Shopify variant ID
+        variantId: variant.id,
       };
 
+      // Add to cart
       addItem(item);
 
-      // Track with GTM
-      const trackableProduct = {
-        id: product.id,
-        title: product.title,
-        price: parseFloat(variant.price || product.price),
-      };
       trackAddToCart({
         id: product.id,
         title: product.title,
@@ -76,21 +138,17 @@ export function AddToCartButton({ product, variant }: AddToCartButtonProps) {
         quantity: 1,
       });
 
+      // REMOVE this second call to window.trackAddToCart
+      // if (typeof window !== "undefined" && window.trackAddToCart) {
+      //   window.trackAddToCart(trackableProduct);
+      // }
+
       await syncCartWithShopify([
         {
           variantId: variant.id,
           quantity: 1,
         },
       ]);
-
-      toast.success("Added to cart", {
-        description: product.title,
-      });
-
-      // Use the global tracking function if available
-      if (typeof window !== "undefined" && window.trackAddToCart) {
-        window.trackAddToCart(trackableProduct);
-      }
 
       toast.success("Added to cart", {
         description: product.title,

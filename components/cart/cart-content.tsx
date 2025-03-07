@@ -110,12 +110,6 @@ export function CartContent({ onClose }: CartContentProps) {
             setIsCheckoutOpen(true);
 
             trackInitiateCheckout(total, items);
-            if (typeof window !== "undefined" && window.trackInitiateCheckout) {
-              window.trackInitiateCheckout(total);
-            }
-
-            onClose();
-            setIsCheckoutOpen(true);
           }}
         >
           Checkout
