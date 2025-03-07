@@ -173,8 +173,8 @@ export default function AccountPage() {
                   <p>{user.defaultAddress.address2}</p>
                 )}
                 <p>
-                  {user.defaultAddress.city}, {user.defaultAddress.province}{" "}
-                  {user.defaultAddress.zip}
+                  t{user.defaultAddress.city}, {user.defaultAddress.province}{" "}
+                  {user.defaultAddress.zip}es
                 </p>
                 <p>{user.defaultAddress.country}</p>
               </div>

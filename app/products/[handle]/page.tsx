@@ -1,10 +1,10 @@
-import { notFound } from 'next/navigation';
-import { Container } from '@/components/ui/container';
-import { ProductDetails } from '@/components/product/product-details';
-import { Breadcrumbs } from '@/components/ui/breadcrumbs';
-import { ProductErrorBoundary } from '@/components/error-boundary/product-error-boundary';
-import { getProduct } from '@/lib/shopify/products';
-import { collections, getCollectionByHandle } from '@/lib/collections';
+import { notFound } from "next/navigation";
+import { Container } from "@/components/ui/container";
+import { ProductDetails } from "@/components/product/product-details";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { ProductErrorBoundary } from "@/components/error-boundary/product-error-boundary";
+import { getProduct } from "@/lib/shopify/products";
+import { collections, getCollectionByHandle } from "@/lib/collections";
 
 interface ProductPageProps {
   params: {
@@ -15,30 +15,31 @@ interface ProductPageProps {
   };
 }
 
-export default async function ProductPage({ params, searchParams }: ProductPageProps) {
+export default async function ProductPage({
+  params,
+  searchParams,
+}: ProductPageProps) {
   if (!params.handle) {
     notFound();
   }
 
   // Add debug logging
-  console.log('Fetching product with handle:', params.handle);
+  console.log("Fetching product with handle:", params.handle);
   const product = await getProduct(params.handle);
-  console.log('Product data:', product);
+  console.log("Product data:", product);
 
   // If no product found, throw 404
   if (!product) {
-    console.log('Product not found:', params.handle);
+    console.log("Product not found:", params.handle);
     notFound();
   }
 
   // Build breadcrumb items based on navigation context
-  const breadcrumbItems = [
-    { label: 'Products', href: '/products' }
-  ];
+  const breadcrumbItems = [{ label: "Products", href: "/products" }];
 
   // Determine collection context
   let collectionHandle = searchParams.collection;
-  
+
   // If no collection in URL, try to find product's primary collection
   if (!collectionHandle && product.collections?.edges.length > 0) {
     collectionHandle = product.collections.edges[0].node.handle;
@@ -46,19 +47,19 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
 
   if (collectionHandle) {
     // Find parent collection if this is a subcollection
-    const parentCollection = collections.find(c => 
-      c.subcollections?.some(sub => sub.handle === collectionHandle)
+    const parentCollection = collections.find((c) =>
+      c.subcollections?.some((sub) => sub.handle === collectionHandle)
     );
-    
+
     if (parentCollection) {
       // Add subcollection only
       const subcollection = parentCollection.subcollections?.find(
-        sub => sub.handle === collectionHandle
+        (sub) => sub.handle === collectionHandle
       );
       if (subcollection) {
         breadcrumbItems.push({
           label: subcollection.title,
-          href: `/products?collection=${subcollection.handle}`
+          href: `/products?collection=${subcollection.handle}`,
         });
       }
     } else {
@@ -67,7 +68,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
       if (collection) {
         breadcrumbItems.push({
           label: collection.title,
-          href: `/products?collection=${collection.handle}`
+          href: `/products?collection=${collection.handle}`,
         });
       }
     }
@@ -79,7 +80,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
         <div className="mb-1">
           <Breadcrumbs items={breadcrumbItems} />
         </div>
-        
+
         <ProductErrorBoundary>
           <ProductDetails product={product} />
         </ProductErrorBoundary>

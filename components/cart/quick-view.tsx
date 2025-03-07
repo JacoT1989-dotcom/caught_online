@@ -21,10 +21,11 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { trackViewContent } from "@/lib/analytics";
 
 const subscriptionOptions = [
   { value: "monthly", label: "Monthly", discount: 0.1 },
@@ -74,6 +75,18 @@ export function QuickView({ product, open, onOpenChange }: QuickViewProps) {
     toast.success(`${product.title} added to cart`);
     onOpenChange(false);
   };
+
+  useEffect(() => {
+    if (product) {
+      // Track view content (unified)
+      trackViewContent({
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        variantId: product.variantId,
+      });
+    }
+  }, [product]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
