@@ -3,6 +3,7 @@ import type { BlogPost } from '@/types/blog';
 
 interface BlogPostGridProps {
   posts: BlogPost[];
+  
 }
 
 export function BlogPostGrid({ posts }: BlogPostGridProps) {

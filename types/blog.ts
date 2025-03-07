@@ -1,3 +1,5 @@
+//types/blog.ts
+
 export interface BlogPost {
   id: string;
   title: string;

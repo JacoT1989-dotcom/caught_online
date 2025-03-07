@@ -1,15 +1,15 @@
 import { Suspense } from "react";
 import { Container } from "@/components/ui/container";
-import { getBlogPosts } from "@/lib/shopify/blog";
 import { BlogPostGrid } from "@/components/blog/blog-post-grid";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getBlogPosts } from "@/lib/contentful/blog";
 
 // Add this export to tell Next.js this is a dynamic route
 export const dynamic = "force-dynamic";
 
 export default async function BlogPage() {
   // Add debug logging
-  console.log("Fetching blog posts...");
+  console.log("Fetching blog posts from Contentful...");
   const posts = await getBlogPosts();
   console.log("Fetched posts:", posts);
 

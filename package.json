@@ -13,6 +13,9 @@
     "prebuild": "npm run fetch-data"
   },
   "dependencies": {
+    "@contentful/rich-text-html-renderer": "^17.0.0",
+    "@contentful/rich-text-react-renderer": "^16.0.1",
+    "@contentful/rich-text-types": "^17.0.0",
     "@hookform/resolvers": "^3.3.4",
     "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-alert-dialog": "^1.0.5",
@@ -51,6 +54,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "cmdk": "^1.0.4",
+    "contentful": "^11.5.3",
     "date-fns": "^3.3.1",
     "embla-carousel-react": "^8.0.0",
     "framer-motion": "^11.0.8",
@@ -70,7 +74,7 @@
     "tailwindcss": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2",
-    "zod": "^3.22.4",
+    "zod": "^3.24.2",
     "zustand": "^4.5.0"
   },
   "devDependencies": {
