@@ -49,10 +49,10 @@ export function AddToCartButton({
     }
 
     setIsAdding(true);
-    try {
-      // Verify inventory one more time before adding
-      await checkProductInventory(product.handle);
 
+    try {
+      // Verify inventory
+      await checkProductInventory(product.handle);
       if (!isAvailable) {
         toast.error("Product is currently out of stock");
         return;
@@ -60,16 +60,26 @@ export function AddToCartButton({
 
       const item = {
         id: product.id,
-        variantId: product.id, // Added the required variantId property
+        variantId: product.id,
         title: product.title,
         price: product.price,
         image: product.image,
         quantity: 1,
       };
 
+      // Add to cart
       addItem(item);
 
-      // Add analytics tracking here
+      // DEBUGGING - Log before tracking
+      console.log("About to track add_to_cart with:", {
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        variantId: product.id,
+        quantity: 1,
+      });
+
+      // Track add to cart
       trackAddToCart({
         id: product.id,
         title: product.title,
@@ -78,8 +88,12 @@ export function AddToCartButton({
         quantity: 1,
       });
 
+      // DEBUGGING - Check dataLayer after tracking
+      console.log("DataLayer after tracking:", window.dataLayer);
+
       toast.success(`${product.title} added to cart`);
     } catch (error) {
+      console.error("Add to cart error:", error);
       toast.error("Failed to add to cart");
     } finally {
       setIsAdding(false);

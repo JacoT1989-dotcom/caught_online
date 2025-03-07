@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { SUBSCRIPTION_PLANS } from "@/lib/types/subscription";
 import type { SubscriptionInterval } from "@/lib/types/subscription";
 import { DeliverySection } from "@/components/product/delivery/delivery-section";
+import { trackAddToCart } from "@/lib/analytics";
 
 const infoSections = [
   {
@@ -150,6 +151,14 @@ export function ProductDetails({ product }: ProductDetailsProps) {
           ? subscriptionInterval
           : undefined,
       });
+
+      trackAddToCart({
+        id: product.id,
+        title: product.title,
+        price: finalPrice,
+        variantId: product.id,
+        quantity: 1,
+      });
     } catch (error) {
       console.error("Error adding to cart:", error);
     }
@@ -173,8 +182,8 @@ export function ProductDetails({ product }: ProductDetailsProps) {
                 {isSubscribed === "monthly"
                   ? "Monthly"
                   : isSubscribed === "bimonthly"
-                  ? "Every 2 Months"
-                  : "Every 3 Months"}
+                    ? "Every 2 Months"
+                    : "Every 3 Months"}
               </Badge>
             )}
           </div>

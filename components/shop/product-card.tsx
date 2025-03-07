@@ -13,6 +13,8 @@ import { cn } from "@/lib/utils";
 import { CalendarRange, Percent, Plus, ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { trackAddToCart } from "@/lib/analytics";
+
 import { Button } from "../ui/button";
 
 interface ProductCardProps {
@@ -126,6 +128,15 @@ export function ProductCard({
     };
 
     addItem(item);
+
+    // Track add to cart event
+    trackAddToCart({
+      id: product.id,
+      title: product.title,
+      price: finalPrice,
+      variantId: variant?.id || product.id,
+      quantity: 1,
+    });
 
     // Show subscription upsell only for one-time purchases
     if (!shouldShowSubscriptionPrice) {
