@@ -17,31 +17,20 @@ import { toast } from "sonner";
 import {
   updateSubscriptionStatus,
   updateSubscriptionDetails,
+  Subscription,
+  SubscriptionDetails,
 } from "@/lib/shopify/subscriptions";
-
-interface Subscription {
-  id: string;
-  status: "ACTIVE" | "PAUSED";
-  nextDeliveryDate: string;
-  interval: string;
-  product: {
-    title: string;
-    image: string;
-  };
-  price: {
-    amount: string;
-    currencyCode: string;
-  };
-}
 
 interface SubscriptionSettingsProps {
   subscription: Subscription;
   onClose: () => void;
+  onUpdate?: (updatedSubscription: Subscription) => void;
 }
 
 export function SubscriptionSettings({
   subscription,
   onClose,
+  onUpdate,
 }: SubscriptionSettingsProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
@@ -55,6 +44,15 @@ export function SubscriptionSettings({
     setIsUpdating(true);
     try {
       await updateSubscriptionStatus(subscription.id, newStatus);
+
+      // Update local state via callback if provided
+      if (onUpdate) {
+        onUpdate({
+          ...subscription,
+          status: newStatus,
+        });
+      }
+
       toast.success(
         newStatus === "ACTIVE"
           ? "Subscription resumed successfully"
@@ -62,6 +60,7 @@ export function SubscriptionSettings({
       );
       onClose();
     } catch (error) {
+      console.error("Error updating subscription status:", error);
       toast.error("Failed to update subscription");
     } finally {
       setIsUpdating(false);
@@ -73,14 +72,28 @@ export function SubscriptionSettings({
 
     setIsUpdating(true);
     try {
-      // This function needs to be implemented in your API service
-      await updateSubscriptionDetails(subscription.id, {
+      const formattedDate = format(selectedDate, "yyyy-MM-dd");
+
+      const details: SubscriptionDetails = {
         interval: selectedInterval,
-        nextDeliveryDate: format(selectedDate, "yyyy-MM-dd"),
-      });
+        nextDeliveryDate: formattedDate,
+      };
+
+      await updateSubscriptionDetails(subscription.id, details);
+
+      // Update local state via callback if provided
+      if (onUpdate) {
+        onUpdate({
+          ...subscription,
+          interval: selectedInterval,
+          nextDeliveryDate: formattedDate,
+        });
+      }
+
       toast.success("Subscription settings updated successfully");
       onClose();
     } catch (error) {
+      console.error("Error updating subscription settings:", error);
       toast.error("Failed to update subscription settings");
     } finally {
       setIsUpdating(false);

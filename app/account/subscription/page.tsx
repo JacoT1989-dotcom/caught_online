@@ -1,28 +1,59 @@
-'use client';
+"use client";
 
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { CalendarRange, Package2, Settings2, AlertCircle, Loader2 } from "lucide-react";
+import {
+  CalendarRange,
+  Package2,
+  Settings2,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { getCustomerSubscriptions } from "@/lib/shopify/subscriptions";
-import { SubscriptionSettings } from "@/components/account/subscription-settings";
+import {
+  getCustomerSubscriptions,
+  Subscription,
+} from "@/lib/shopify/subscriptions";
 import { format, addMonths } from "date-fns";
-import { useState } from "react";
 import Image from "next/image";
+import { SubscriptionSettings } from "@/components/account/subscription-settings";
 
 export default function SubscriptionsPage() {
   const { user } = useAuth();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [currentSubscription, setCurrentSubscription] = useState<any>(null);
+  const [currentSubscription, setCurrentSubscription] =
+    useState<Subscription | null>(null);
 
-  const { data: subscriptions, isLoading } = useQuery({
-    queryKey: ['subscriptions', user?.id],
-    queryFn: () => getCustomerSubscriptions(user?.id || ''),
+  // Format customer ID if needed
+  const getFormattedCustomerId = (): string => {
+    if (!user?.id) return "";
+
+    let formattedId = user.id;
+    if (!formattedId.startsWith("gid://")) {
+      formattedId = `gid://shopify/Customer/${formattedId}`;
+    }
+    return formattedId;
+  };
+
+  const {
+    data: subscriptions,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["subscriptions", user?.id],
+    queryFn: () => getCustomerSubscriptions(getFormattedCustomerId()),
     enabled: !!user?.id,
   });
+
+  const handleSubscriptionUpdate = () => {
+    // Refetch data after settings update
+    refetch();
+    setIsSettingsOpen(false);
+  };
 
   if (isLoading) {
     return (
@@ -41,16 +72,18 @@ export default function SubscriptionsPage() {
               <Package2 className="h-8 w-8 text-muted-foreground" />
             </div>
             <div className="space-y-2">
-              <h2 className="text-2xl font-semibold">No Active Subscriptions</h2>
+              <h2 className="text-2xl font-semibold">
+                No Active Subscriptions
+              </h2>
               <p className="text-muted-foreground max-w-md mx-auto">
-                Subscribe to your favorite products and save up to 10% on regular deliveries.
+                Subscribe to your favorite products and save up to 10% on
+                regular deliveries.
               </p>
             </div>
-            <Button 
-              asChild
-              className="mt-4 bg-[#f6424a] hover:bg-[#f6424a]/90"
-            >
-              <a href="/products?subscription=true">Browse Subscription Products</a>
+            <Button asChild className="mt-4 bg-[#f6424a] hover:bg-[#f6424a]/90">
+              <a href="/products?subscription=true">
+                Browse Subscription Products
+              </a>
             </Button>
           </div>
         </Card>
@@ -75,28 +108,38 @@ export default function SubscriptionsPage() {
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-4">
                   <div className="relative h-16 w-16 rounded-lg overflow-hidden">
-                    <Image
-                      src={subscription.product.image}
-                      alt={subscription.product.title}
-                      fill
-                      sizes="64px"
-                      className="object-cover"
-                    />
+                    {subscription.product.image ? (
+                      <Image
+                        src={subscription.product.image}
+                        alt={subscription.product.title}
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="bg-muted flex items-center justify-center h-full w-full">
+                        <Package2 className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                    )}
                   </div>
                   <div>
-                    <h3 className="font-semibold">{subscription.product.title}</h3>
+                    <h3 className="font-semibold">
+                      {subscription.product.title}
+                    </h3>
                     <div className="flex items-center gap-2 mt-1">
                       <CalendarRange className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm text-muted-foreground">
-                        {subscription.interval === 'monthly' ? 'Monthly' :
-                         subscription.interval === 'bimonthly' ? 'Every 2 Months' :
-                         'Every 3 Months'}
+                        {subscription.interval === "monthly"
+                          ? "Monthly"
+                          : subscription.interval === "bimonthly"
+                            ? "Every 2 Months"
+                            : "Every 3 Months"}
                       </span>
                     </div>
                   </div>
                 </div>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   className="gap-2"
                   onClick={() => {
@@ -114,19 +157,28 @@ export default function SubscriptionsPage() {
               {/* Details */}
               <div className="grid sm:grid-cols-3 gap-6">
                 <div>
-                  <div className="text-sm text-muted-foreground mb-1">Next Delivery</div>
+                  <div className="text-sm text-muted-foreground mb-1">
+                    Next Delivery
+                  </div>
                   <div className="font-medium">
-                    {format(new Date(subscription.nextDeliveryDate), 'MMM d, yyyy')}
+                    {format(
+                      new Date(subscription.nextDeliveryDate),
+                      "MMM d, yyyy"
+                    )}
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm text-muted-foreground mb-1">Price per Delivery</div>
+                  <div className="text-sm text-muted-foreground mb-1">
+                    Price per Delivery
+                  </div>
                   <div className="font-medium">
                     {formatPrice(parseFloat(subscription.price.amount))}
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm text-muted-foreground mb-1">Status</div>
+                  <div className="text-sm text-muted-foreground mb-1">
+                    Status
+                  </div>
                   <div className="font-medium capitalize">
                     {subscription.status.toLowerCase()}
                   </div>
@@ -138,18 +190,23 @@ export default function SubscriptionsPage() {
                 <h4 className="font-medium mb-3">Upcoming Deliveries</h4>
                 <div className="grid gap-2">
                   {[...Array(3)].map((_, i) => {
-                    const date = addMonths(new Date(subscription.nextDeliveryDate), i);
+                    const date = addMonths(
+                      new Date(subscription.nextDeliveryDate),
+                      i
+                    );
                     return (
-                      <div 
+                      <div
                         key={i}
                         className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
                       >
                         <div className="flex items-center gap-3">
                           <div className="h-2 w-2 rounded-full bg-[#41c8d2]" />
-                          <span>{format(date, 'MMMM d, yyyy')}</span>
+                          <span>{format(date, "MMMM d, yyyy")}</span>
                         </div>
                         {i === 0 && (
-                          <span className="text-sm text-[#41c8d2]">Next Delivery</span>
+                          <span className="text-sm text-[#41c8d2]">
+                            Next Delivery
+                          </span>
                         )}
                       </div>
                     );
@@ -158,12 +215,15 @@ export default function SubscriptionsPage() {
               </div>
 
               {/* Warning for Paused Subscriptions */}
-              {subscription.status === 'PAUSED' && (
+              {subscription.status === "PAUSED" && (
                 <div className="flex items-start gap-3 p-4 rounded-lg bg-yellow-500/10 text-yellow-700">
                   <AlertCircle className="h-5 w-5 flex-shrink-0" />
                   <div className="text-sm">
                     <p className="font-medium">Subscription Paused</p>
-                    <p>Your subscription is currently paused. Resume anytime to continue receiving deliveries.</p>
+                    <p>
+                      Your subscription is currently paused. Resume anytime to
+                      continue receiving deliveries.
+                    </p>
                   </div>
                 </div>
               )}
@@ -173,9 +233,10 @@ export default function SubscriptionsPage() {
       </div>
 
       {isSettingsOpen && currentSubscription && (
-        <SubscriptionSettings 
+        <SubscriptionSettings
           subscription={currentSubscription}
           onClose={() => setIsSettingsOpen(false)}
+          onUpdate={handleSubscriptionUpdate}
         />
       )}
     </div>

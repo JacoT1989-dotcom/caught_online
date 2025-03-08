@@ -1,35 +1,37 @@
-'use client';
+"use client";
 
-import { useSubscriptionToggle } from '@/hooks/use-subscription-toggle';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { useSubscriptionToggle } from "@/hooks/use-subscription-toggle";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { CalendarRange, Percent, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { SUBSCRIPTION_PLANS } from '@/lib/types/subscription';
+} from "@/components/ui/select";
+import { CalendarRange, Percent, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { SUBSCRIPTION_PLANS } from "@/lib/types/subscription";
 
 interface SubscriptionToggleProps {
-  variant?: 'default' | 'compact';
+  variant?: "default" | "compact";
 }
 
-export function SubscriptionToggle({ variant = 'default' }: SubscriptionToggleProps) {
-  const { 
-    isSubscriptionMode, 
-    selectedInterval, 
-    toggle, 
+export function SubscriptionToggle({
+  variant = "default",
+}: SubscriptionToggleProps) {
+  const {
+    isSubscriptionMode,
+    selectedInterval,
+    toggle,
     setInterval,
-    getDiscount 
+    getDiscount,
   } = useSubscriptionToggle();
 
-  if (variant === 'compact') {
+  if (variant === "compact") {
     return (
       <AnimatePresence mode="wait">
         {isSubscriptionMode && selectedInterval ? (
@@ -41,11 +43,8 @@ export function SubscriptionToggle({ variant = 'default' }: SubscriptionTogglePr
             className="flex h-10 rounded-md border bg-background/95"
           >
             <div className="flex-1">
-              <Select
-                value={selectedInterval}
-                onValueChange={setInterval}
-              >
-                <SelectTrigger 
+              <Select value={selectedInterval} onValueChange={setInterval}>
+                <SelectTrigger
                   className={cn(
                     "h-10 w-full border-0 bg-transparent rounded-l-md",
                     "focus:ring-0 focus-visible:ring-0",
@@ -57,16 +56,16 @@ export function SubscriptionToggle({ variant = 'default' }: SubscriptionTogglePr
                 <SelectContent>
                   {Object.entries(SUBSCRIPTION_PLANS).map(([key, plan]) => (
                     <SelectItem key={key} value={key}>
-                      {plan.label} ({(plan.discount * 100)}% off)
+                      {plan.label} ({plan.discount * 100}% off)
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="border-l h-full">
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="h-10 w-10 rounded-none rounded-r-md"
                 onClick={() => toggle()}
               >
@@ -88,7 +87,9 @@ export function SubscriptionToggle({ variant = 'default' }: SubscriptionTogglePr
                 onCheckedChange={toggle}
                 className="data-[state=checked]:bg-[#f6424a]"
               />
-              <Label className="text-sm font-medium">Subscribe & Save up to 10%</Label>
+              <Label className="text-sm font-medium">
+                Subscribe & Save up to 10%
+              </Label>
             </div>
           </motion.div>
         )}
@@ -111,7 +112,7 @@ export function SubscriptionToggle({ variant = 'default' }: SubscriptionTogglePr
         <div className="flex items-center gap-4 min-w-max">
           <CalendarRange className="hidden sm:block h-4 w-4 text-muted-foreground" />
           <Select
-            value={selectedInterval || 'monthly'}
+            value={selectedInterval || "monthly"}
             onValueChange={setInterval}
           >
             <SelectTrigger className="h-8 w-[180px]">
@@ -120,7 +121,7 @@ export function SubscriptionToggle({ variant = 'default' }: SubscriptionTogglePr
             <SelectContent>
               {Object.entries(SUBSCRIPTION_PLANS).map(([key, plan]) => (
                 <SelectItem key={key} value={key}>
-                  {plan.label} ({(plan.discount * 100)}% off)
+                  {plan.label} ({plan.discount * 100}% off)
                 </SelectItem>
               ))}
             </SelectContent>

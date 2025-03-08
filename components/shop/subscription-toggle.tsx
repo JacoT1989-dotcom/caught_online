@@ -1,10 +1,9 @@
-'use client';
-
-import { useEffect } from 'react';
-import { useSubscriptionToggle } from '@/hooks/use-subscription-toggle';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
+"use client";
+import { useEffect } from "react";
+import { useSubscriptionToggle } from "@/hooks/use-subscription-toggle";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -12,39 +11,63 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SUBSCRIPTION_PLANS } from '@/lib/types/subscription';
-import { useSearchParams } from 'next/navigation';
+import { SUBSCRIPTION_PLANS } from "@/lib/types/subscription";
+import { useSearchParams } from "next/navigation";
 
 interface SubscriptionToggleProps {
-  variant?: 'default' | 'compact';
+  variant?: "default" | "compact";
 }
 
-export function SubscriptionToggle({ variant = 'default' }: SubscriptionToggleProps) {
-  const { isSubscriptionMode, toggle, selectedInterval, setInterval } = useSubscriptionToggle();
+export function SubscriptionToggle({
+  variant = "default",
+}: SubscriptionToggleProps) {
+  const { isSubscriptionMode, toggle, selectedInterval, setInterval } =
+    useSubscriptionToggle();
   const searchParams = useSearchParams();
 
   // Handle subscription parameter from URL
   useEffect(() => {
-    const subscriptionParam = searchParams.get('subscription');
+    const subscriptionParam = searchParams.get("subscription");
     if (subscriptionParam && subscriptionParam in SUBSCRIPTION_PLANS) {
+      // First set the interval
       setInterval(subscriptionParam as keyof typeof SUBSCRIPTION_PLANS);
+
+      // Then ensure subscription mode is active
       if (!isSubscriptionMode) {
         toggle();
       }
     }
   }, [searchParams, setInterval, toggle, isSubscriptionMode]);
 
-  if (variant === 'compact') {
+  // Handle selection change
+  const handleIntervalChange = (value: string) => {
+    if (value === "none") {
+      // If 'none' is selected, turn off subscription mode
+      if (isSubscriptionMode) {
+        toggle();
+      }
+    } else {
+      // Otherwise, set the interval and ensure subscription mode is on
+      setInterval(value as keyof typeof SUBSCRIPTION_PLANS);
+      if (!isSubscriptionMode) {
+        toggle();
+      }
+    }
+  };
+
+  if (variant === "compact") {
     if (isSubscriptionMode) {
       return (
         <Select
-          value={selectedInterval || 'monthly'}
-          onValueChange={setInterval}
+          value={selectedInterval || "monthly"}
+          onValueChange={handleIntervalChange}
         >
-          <SelectTrigger className={cn(
-            "w-full border transition-colors duration-200",
-            "border-[#41c8d2]/20 bg-[#41c8d2]/5"
-          )}>
+          <SelectTrigger
+            className={cn(
+              "w-full border transition-colors duration-200",
+              "border-[#41c8d2]/20 bg-[#41c8d2]/5"
+            )}
+          >
             <SelectValue className="text-left" />
           </SelectTrigger>
           <SelectContent align="start" className="w-[240px]">
@@ -56,19 +79,20 @@ export function SubscriptionToggle({ variant = 'default' }: SubscriptionTogglePr
             </div>
             {Object.entries(SUBSCRIPTION_PLANS).map(([key, plan]) => (
               <SelectItem key={key} value={key} className="pl-2">
-                {plan.label} ({(plan.discount * 100)}% off)
+                {plan.label} ({plan.discount * 100}% off)
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       );
     }
-
     return (
-      <div className={cn(
-        "flex items-center gap-2 px-2 h-10 rounded-md border w-full",
-        "bg-background/95 transition-colors duration-200"
-      )}>
+      <div
+        className={cn(
+          "flex items-center gap-2 px-2 h-10 rounded-md border w-full",
+          "bg-background/95 transition-colors duration-200"
+        )}
+      >
         <Switch
           checked={isSubscriptionMode}
           onCheckedChange={toggle}

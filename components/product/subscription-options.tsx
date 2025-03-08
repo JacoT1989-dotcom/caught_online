@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { RadioGroup } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { formatPrice } from '@/lib/utils';
-import { SUBSCRIPTION_PLANS } from '@/lib/types/subscription';
-import type { SubscriptionInterval } from '@/lib/types/subscription';
-import { cn } from '@/lib/utils';
-import { Percent, Plus, ChevronDown } from 'lucide-react';
-import { useState } from 'react';
+import { RadioGroup } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { formatPrice } from "@/lib/utils";
+import { SUBSCRIPTION_PLANS } from "@/lib/types/subscription";
+import type { SubscriptionInterval } from "@/lib/types/subscription";
+import { cn } from "@/lib/utils";
+import { Percent, Plus, ChevronDown } from "lucide-react";
+import { useState } from "react";
 
 interface SubscriptionOptionsProps {
   price: number;
-  purchaseType: 'onetime' | 'subscription';
-  onPurchaseTypeChange: (value: 'onetime' | 'subscription') => void;
+  purchaseType: "onetime" | "subscription";
+  onPurchaseTypeChange: (value: "onetime" | "subscription") => void;
   subscriptionInterval: SubscriptionInterval;
   onSubscriptionIntervalChange: (value: SubscriptionInterval) => void;
   onAddToCart: () => void;
@@ -39,23 +39,25 @@ export function SubscriptionOptions({
       <div>
         <button
           type="button"
-          onClick={() => onPurchaseTypeChange('onetime')}
+          onClick={() => onPurchaseTypeChange("onetime")}
           className={cn(
             "w-full text-left transition-colors duration-200",
             "rounded-lg border p-4",
-            purchaseType === 'onetime' 
-              ? "border-[#41c8d2] bg-[#41c8d2]/5" 
+            purchaseType === "onetime"
+              ? "border-[#41c8d2] bg-[#41c8d2]/5"
               : "hover:border-[#41c8d2]/20 hover:bg-[#41c8d2]/5"
           )}
         >
           <div className="flex items-center gap-3">
-            <div className={cn(
-              "w-4 h-4 rounded-full border-2 transition-colors",
-              purchaseType === 'onetime' 
-                ? "border-[#41c8d2] bg-[#41c8d2]" 
-                : "border-muted-foreground"
-            )}>
-              {purchaseType === 'onetime' && (
+            <div
+              className={cn(
+                "w-4 h-4 rounded-full border-2 transition-colors",
+                purchaseType === "onetime"
+                  ? "border-[#41c8d2] bg-[#41c8d2]"
+                  : "border-muted-foreground"
+              )}
+            >
+              {purchaseType === "onetime" && (
                 <div className="w-2 h-2 mx-auto mt-0.5 rounded-full bg-white" />
               )}
             </div>
@@ -69,9 +71,9 @@ export function SubscriptionOptions({
         </button>
 
         {/* Add to Cart Button */}
-        <Button 
+        <Button
           onClick={() => {
-            onPurchaseTypeChange('onetime');
+            onPurchaseTypeChange("onetime");
             onAddToCart();
           }}
           className="w-full gap-2 bg-[#f6424a] hover:bg-[#f6424a]/90 mt-3 h-11"
@@ -87,25 +89,27 @@ export function SubscriptionOptions({
         <button
           type="button"
           onClick={() => {
-            onPurchaseTypeChange('subscription');
+            onPurchaseTypeChange("subscription");
             setShowAllOptions(true);
           }}
           className={cn(
             "w-full text-left transition-colors duration-200",
             "rounded-lg border p-4",
-            purchaseType === 'subscription' 
-              ? "border-[#f6424a] bg-[#f6424a]/5" 
+            purchaseType === "subscription"
+              ? "border-[#f6424a] bg-[#f6424a]/5"
               : "hover:border-[#f6424a]/20 hover:bg-[#f6424a]/5"
           )}
         >
           <div className="flex items-center gap-3">
-            <div className={cn(
-              "w-4 h-4 rounded-full border-2 transition-colors",
-              purchaseType === 'subscription' 
-                ? "border-[#f6424a] bg-[#f6424a]" 
-                : "border-muted-foreground"
-            )}>
-              {purchaseType === 'subscription' && (
+            <div
+              className={cn(
+                "w-4 h-4 rounded-full border-2 transition-colors",
+                purchaseType === "subscription"
+                  ? "border-[#f6424a] bg-[#f6424a]"
+                  : "border-muted-foreground"
+              )}
+            >
+              {purchaseType === "subscription" && (
                 <div className="w-2 h-2 mx-auto mt-0.5 rounded-full bg-white" />
               )}
             </div>
@@ -119,34 +123,42 @@ export function SubscriptionOptions({
         </button>
 
         {/* Subscription Intervals */}
-        <div className={cn(
-          "pl-6 space-y-4 mt-3 transition-all duration-200",
-          purchaseType === 'subscription' ? "opacity-100" : "opacity-50 pointer-events-none"
-        )}>
-          <RadioGroup 
-            value={subscriptionInterval} 
-            onValueChange={(value) => onSubscriptionIntervalChange(value as SubscriptionInterval)}
+        <div
+          className={cn(
+            "pl-6 space-y-4 mt-3 transition-all duration-200",
+            purchaseType === "subscription"
+              ? "opacity-100"
+              : "opacity-50 pointer-events-none"
+          )}
+        >
+          <RadioGroup
+            value={subscriptionInterval}
+            onValueChange={(value) =>
+              onSubscriptionIntervalChange(value as SubscriptionInterval)
+            }
           >
             {/* Monthly Option */}
             <button
               type="button"
-              onClick={() => onSubscriptionIntervalChange('monthly')}
+              onClick={() => onSubscriptionIntervalChange("monthly")}
               className={cn(
                 "w-full text-left transition-colors duration-200",
                 "rounded-lg border p-4",
-                subscriptionInterval === 'monthly' 
-                  ? "border-[#f6424a] bg-[#f6424a]/5" 
+                subscriptionInterval === "monthly"
+                  ? "border-[#f6424a] bg-[#f6424a]/5"
                   : "hover:border-[#f6424a]/20 hover:bg-[#f6424a]/5"
               )}
             >
               <div className="flex items-center gap-3">
-                <div className={cn(
-                  "w-4 h-4 rounded-full border-2 transition-colors",
-                  subscriptionInterval === 'monthly' 
-                    ? "border-[#f6424a] bg-[#f6424a]" 
-                    : "border-muted-foreground"
-                )}>
-                  {subscriptionInterval === 'monthly' && (
+                <div
+                  className={cn(
+                    "w-4 h-4 rounded-full border-2 transition-colors",
+                    subscriptionInterval === "monthly"
+                      ? "border-[#f6424a] bg-[#f6424a]"
+                      : "border-muted-foreground"
+                  )}
+                >
+                  {subscriptionInterval === "monthly" && (
                     <div className="w-2 h-2 mx-auto mt-0.5 rounded-full bg-white" />
                   )}
                 </div>
@@ -171,28 +183,30 @@ export function SubscriptionOptions({
             </button>
 
             {/* Show additional options when subscription is selected */}
-            {purchaseType === 'subscription' && showAllOptions && (
+            {purchaseType === "subscription" && showAllOptions && (
               <>
                 {/* Bi-monthly Option */}
                 <button
                   type="button"
-                  onClick={() => onSubscriptionIntervalChange('bimonthly')}
+                  onClick={() => onSubscriptionIntervalChange("bimonthly")}
                   className={cn(
                     "w-full text-left transition-colors duration-200",
                     "rounded-lg border p-4 mt-2",
-                    subscriptionInterval === 'bimonthly' 
-                      ? "border-[#f6424a] bg-[#f6424a]/5" 
+                    subscriptionInterval === "bimonthly"
+                      ? "border-[#f6424a] bg-[#f6424a]/5"
                       : "hover:border-[#f6424a]/20 hover:bg-[#f6424a]/5"
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "w-4 h-4 rounded-full border-2 transition-colors",
-                      subscriptionInterval === 'bimonthly' 
-                        ? "border-[#f6424a] bg-[#f6424a]" 
-                        : "border-muted-foreground"
-                    )}>
-                      {subscriptionInterval === 'bimonthly' && (
+                    <div
+                      className={cn(
+                        "w-4 h-4 rounded-full border-2 transition-colors",
+                        subscriptionInterval === "bimonthly"
+                          ? "border-[#f6424a] bg-[#f6424a]"
+                          : "border-muted-foreground"
+                      )}
+                    >
+                      {subscriptionInterval === "bimonthly" && (
                         <div className="w-2 h-2 mx-auto mt-0.5 rounded-full bg-white" />
                       )}
                     </div>
@@ -219,23 +233,25 @@ export function SubscriptionOptions({
                 {/* Quarterly Option */}
                 <button
                   type="button"
-                  onClick={() => onSubscriptionIntervalChange('quarterly')}
+                  onClick={() => onSubscriptionIntervalChange("quarterly")}
                   className={cn(
                     "w-full text-left transition-colors duration-200",
                     "rounded-lg border p-4 mt-2",
-                    subscriptionInterval === 'quarterly' 
-                      ? "border-[#f6424a] bg-[#f6424a]/5" 
+                    subscriptionInterval === "quarterly"
+                      ? "border-[#f6424a] bg-[#f6424a]/5"
                       : "hover:border-[#f6424a]/20 hover:bg-[#f6424a]/5"
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "w-4 h-4 rounded-full border-2 transition-colors",
-                      subscriptionInterval === 'quarterly' 
-                        ? "border-[#f6424a] bg-[#f6424a]" 
-                        : "border-muted-foreground"
-                    )}>
-                      {subscriptionInterval === 'quarterly' && (
+                    <div
+                      className={cn(
+                        "w-4 h-4 rounded-full border-2 transition-colors",
+                        subscriptionInterval === "quarterly"
+                          ? "border-[#f6424a] bg-[#f6424a]"
+                          : "border-muted-foreground"
+                      )}
+                    >
+                      {subscriptionInterval === "quarterly" && (
                         <div className="w-2 h-2 mx-auto mt-0.5 rounded-full bg-white" />
                       )}
                     </div>
@@ -263,9 +279,9 @@ export function SubscriptionOptions({
           </RadioGroup>
 
           {/* Subscribe Now Button */}
-          <Button 
+          <Button
             onClick={() => {
-              onPurchaseTypeChange('subscription');
+              onPurchaseTypeChange("subscription");
               onAddToCart();
             }}
             className="w-full gap-2 bg-[#f6424a] hover:bg-[#f6424a]/90 h-11"
