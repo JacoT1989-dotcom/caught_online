@@ -20,6 +20,14 @@ interface AuthState {
     firstName?: string;
     lastName?: string;
     phone?: string;
+    address?: {
+      address1: string;
+      address2?: string;
+      city: string;
+      province: string;
+      zip: string;
+      country: string;
+    };
   }) => Promise<void>;
   logout: () => void;
   refreshUserData: () => Promise<void>;
@@ -55,7 +63,9 @@ export const useAuth = create<AuthState>()(
 
       register: async (userData) => {
         try {
+          // The userData object now includes the address property
           await registerCustomer(userData);
+
           // After registration, log the user in
           await get().login(userData.email, userData.password);
         } catch (error) {
