@@ -1,3 +1,4 @@
+// lib/contentful/blog.ts
 import { contentfulClient } from './client';
 import { documentToHtmlString } from '@contentful/rich-text-html-renderer';
 import { Document } from '@contentful/rich-text-types';
@@ -14,11 +15,17 @@ function safeDocumentToHtml(content: Document | null | undefined): string {
   }
 }
 
+// Helper function to get the URL from a Contentful Asset
+function getImageUrl(image: any): string {
+  if (!image || !image.fields || !image.fields.file) return '';
+  return `https:${image.fields.file.url}`;
+}
+
 export async function getBlogPosts(): Promise<BlogPost[]> {
   try {
     const response = await contentfulClient.getEntries({
       content_type: 'blogPost',
-      order: ['-fields.publishedAt'] as const, // Fixed order type issue
+      order: ['-fields.publishedAt'] as const,
     });
 
     return response.items.map((item) => ({
@@ -30,16 +37,24 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
       publishedAt: (item.fields.publishedAt as string) || new Date().toISOString(),
       image: item.fields.image
         ? {
-            url: (item.fields.image as any).fields?.file?.url || '',
+            url: getImageUrl(item.fields.image),
             altText: (item.fields.image as any).fields?.description || '',
           }
         : undefined,
       author: item.fields.author
         ? {
             name: (item.fields.author as any).fields?.name || '',
+            bio: (item.fields.author as any).fields?.bio || '',
+            profileImage: (item.fields.author as any).fields?.profileImage
+              ? {
+                  url: getImageUrl((item.fields.author as any).fields.profileImage),
+                  altText: (item.fields.author as any).fields.profileImage?.fields?.description || '',
+                }
+              : undefined,
           }
         : undefined,
       handle: (item.fields.handle as string) || '',
+      blog: (item.fields.blog as string) || '',
       tags: Array.isArray(item.fields.tags) ? (item.fields.tags as string[]) : [],
     }));
   } catch (error) {
@@ -53,7 +68,7 @@ export async function getBlogPost(handle: string): Promise<BlogPost | null> {
   try {
     const response = await contentfulClient.getEntries({
       content_type: 'blogPost',
-      'fields.handle': handle, // Filters by the handle field
+      'fields.handle': handle,
       limit: 1,
     });
 
@@ -72,16 +87,24 @@ export async function getBlogPost(handle: string): Promise<BlogPost | null> {
       publishedAt: (item.fields.publishedAt as string) || new Date().toISOString(),
       image: item.fields.image
         ? {
-            url: (item.fields.image as any).fields?.file?.url || '',
+            url: getImageUrl(item.fields.image),
             altText: (item.fields.image as any).fields?.description || '',
           }
         : undefined,
       author: item.fields.author
         ? {
             name: (item.fields.author as any).fields?.name || '',
+            bio: (item.fields.author as any).fields?.bio || '',
+            profileImage: (item.fields.author as any).fields?.profileImage
+              ? {
+                  url: getImageUrl((item.fields.author as any).fields.profileImage),
+                  altText: (item.fields.author as any).fields.profileImage?.fields?.description || '',
+                }
+              : undefined,
           }
         : undefined,
       handle: (item.fields.handle as string) || '',
+      blog: (item.fields.blog as string) || '',
       tags: Array.isArray(item.fields.tags) ? (item.fields.tags as string[]) : [],
     };
   } catch (error) {

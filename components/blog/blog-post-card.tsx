@@ -35,6 +35,11 @@ export function BlogPostCard({ post }: BlogPostCardProps) {
             <span>{post.author?.name}</span>
             <span>{format(new Date(post.publishedAt), "MMM d, yyyy")}</span>
           </div>
+          {post.blog && (
+            <div>
+              <Badge variant="outline">{post.blog}</Badge>
+            </div>
+          )}
           {post.tags && post.tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {post.tags.map((tag) => (
