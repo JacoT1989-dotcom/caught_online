@@ -1,4 +1,4 @@
-//types/blog.ts
+// types/blog.ts
 
 export interface BlogPost {
   id: string;
@@ -13,7 +13,23 @@ export interface BlogPost {
   };
   author?: {
     name: string;
+    bio?: string;
+    profileImage?: {
+      url: string;
+      altText?: string;
+    };
   };
   handle: string;
+  blog?: string; // For the blog category (e.g., "Dishes-With-Fishes")
   tags?: string[];
+}
+
+export interface Author {
+  id: string;
+  name: string;
+  bio?: string;
+  profileImage?: {
+    url: string;
+    altText?: string;
+  };
 }
