@@ -10,6 +10,7 @@ import { WildCaught } from "@/components/home/wild-caught";
 import { ProductGridSection } from "@/components/home/product-grid-section";
 import { SustainabilityPreview } from "@/components/home/sustainability-preview";
 import { getProducts } from "@/lib/shopify/products";
+import { UserDataTracker } from "@/components/analytics/UserDataTracker";
 
 // Set appropriate revalidation time for this page
 export const revalidate = 3600; // Revalidate every hour
@@ -32,6 +33,7 @@ export default async function HomePage() {
 
   return (
     <main>
+      <UserDataTracker />
       <Hero />
       <Testimonials />
       <ProductCategories />

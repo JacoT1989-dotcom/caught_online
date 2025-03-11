@@ -49,8 +49,16 @@ declare global {
   interface Window {
     dataLayer?: any[];
     fbq?: any;
+    gtag?: {
+      apiResult?: {
+        session_id?: string;
+        client_id?: string;
+      };
+    };
     ShopifyAnalytics?: ShopifyAnalyticsType;
     ShopifyAnalyticsObject?: string;
+    trackUserData?: () => void;
+    trackFormSubmit?: (formData: { form_name: string }) => void;
     trackLinkClick?: (linkData: {
       link_name: string;
       link_url: string;
@@ -62,6 +70,7 @@ declare global {
         locale?: string;
       };
     };
+
     _swat?: any; // Add if you're using Swat.io or similar
     DEBUG_ANALYTICS?: boolean;
     trackPageView?: () => void;
@@ -168,6 +177,54 @@ export function initAnalytics(): string {
           console.error('Analytics error:', error);
         }
       };
+
+      window.trackFormSubmit = function(formData) {
+  try {
+    // Validate data
+    if (!formData || !formData.form_name) {
+      console.error('Invalid form data for trackFormSubmit', formData);
+      return;
+    }
+    
+    // Track in GTM
+    if (window.dataLayer) {
+      window.dataLayer.push({
+        event: 'form_submit_attempt',
+        form_name: formData.form_name,
+        cd_session_id: window.gtag ? window.gtag.apiResult?.session_id : undefined,
+        cd_client_id: window.gtag ? window.gtag.apiResult?.client_id : undefined
+      });
+    }
+    
+    if (window.DEBUG_ANALYTICS) {
+      console.log('📊 Form Submit tracked', formData);
+    }
+  } catch (error) {
+    console.error('Analytics error:', error);
+  }
+};
+
+window.trackUserData = function() {
+  try {
+    // Track in GTM
+    if (window.dataLayer) {
+      window.dataLayer.push({
+        event: 'fetch_user_data',
+        cd_session_id: window.gtag ? window.gtag.apiResult?.session_id : undefined,
+        cd_client_id: window.gtag ? window.gtag.apiResult?.client_id : undefined
+      });
+    }
+    
+    if (window.DEBUG_ANALYTICS) {
+      console.log('📊 User Data Fetch tracked', {
+        cd_session_id: window.gtag?.apiResult?.session_id,
+        cd_client_id: window.gtag?.apiResult?.client_id
+      });
+    }
+  } catch (error) {
+    console.error('Analytics error:', error);
+  }
+};
 
       window.trackLinkClick = function(linkData) {
   try {
@@ -665,5 +722,55 @@ export function trackLinkClick(linkName: string, linkUrl: string): void {
     debugLog("LinkClick", { link_name: linkName, link_url: linkUrl });
   } catch (error) {
     console.error("Failed to track link click:", error);
+  }
+}
+
+export function trackFormSubmit(formName: string): void {
+  if (typeof window === "undefined") return;
+
+  try {
+    if (typeof window.trackFormSubmit === "function") {
+      window.trackFormSubmit({
+        form_name: formName,
+      });
+    } else {
+      // Fallback implementation
+      if (window.dataLayer) {
+        window.dataLayer.push({
+          event: "form_submit_attempt",
+          form_name: formName,
+        });
+      }
+    }
+
+    debugLog("FormSubmit", { form_name: formName });
+  } catch (error) {
+    console.error("Failed to track form submission:", error);
+  }
+}
+
+export function trackUserData(): void {
+  if (typeof window === "undefined") return;
+
+  try {
+    if (typeof window.trackUserData === "function") {
+      window.trackUserData();
+    } else {
+      // Fallback implementation
+      if (window.dataLayer) {
+        window.dataLayer.push({
+          event: "fetch_user_data",
+          cd_session_id: window.gtag?.apiResult?.session_id,
+          cd_client_id: window.gtag?.apiResult?.client_id,
+        });
+      }
+    }
+
+    debugLog("FetchUserData", {
+      cd_session_id: window.gtag?.apiResult?.session_id,
+      cd_client_id: window.gtag?.apiResult?.client_id,
+    });
+  } catch (error) {
+    console.error("Failed to track user data:", error);
   }
 }

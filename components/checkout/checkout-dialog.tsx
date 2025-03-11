@@ -18,6 +18,7 @@ import { formatPrice } from "@/lib/utils";
 import { toast } from "sonner";
 import { createCheckout } from "@/lib/shopify/checkout";
 import { Loader2 } from "lucide-react";
+import { trackFormSubmit } from "@/lib/analytics";
 
 // Delivery fee constants based on regions
 const DELIVERY_FEES: Record<Region | "default", number> = {
@@ -141,7 +142,7 @@ export function CheckoutDialog(): JSX.Element {
       setCurrentStep(currentStep + 1);
       return;
     }
-
+    trackFormSubmit("Checkout Form");
     try {
       setIsLoading(true);
 

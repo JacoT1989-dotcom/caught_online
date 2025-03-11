@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { trackFormSubmit } from "@/lib/analytics";
 
 // Country options
 
@@ -26,7 +27,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-
+    trackFormSubmit("Registration Form");
     try {
       const formData = new FormData(e.currentTarget);
 
