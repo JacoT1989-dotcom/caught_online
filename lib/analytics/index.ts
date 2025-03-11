@@ -51,6 +51,10 @@ declare global {
     fbq?: any;
     ShopifyAnalytics?: ShopifyAnalyticsType;
     ShopifyAnalyticsObject?: string;
+    trackLinkClick?: (linkData: {
+      link_name: string;
+      link_url: string;
+    }) => void;
     Shopify?: {
       Shop?: {
         products?: any[];
@@ -164,6 +168,33 @@ export function initAnalytics(): string {
           console.error('Analytics error:', error);
         }
       };
+
+      window.trackLinkClick = function(linkData) {
+  try {
+    // Validate data
+    if (!linkData || !linkData.link_url) {
+      console.error('Invalid link data for trackLinkClick', linkData);
+      return;
+    }
+    
+    // Track in GTM
+    if (window.dataLayer) {
+      window.dataLayer.push({
+        event: 'link_click',
+        link_name: linkData.link_name || '',
+        link_url: linkData.link_url,
+        cd_session_id: window.gtag ? window.gtag.apiResult?.session_id : undefined,
+        cd_client_id: window.gtag ? window.gtag.apiResult?.client_id : undefined
+      });
+    }
+    
+    if (window.DEBUG_ANALYTICS) {
+      console.log('📊 Link Click tracked', linkData);
+    }
+  } catch (error) {
+    console.error('Analytics error:', error);
+  }
+};
       
       window.trackAddToCart = function(product) {
         try {
@@ -608,5 +639,31 @@ export function trackSubscription(plan: string, value: number): void {
     debugLog("Subscription", { plan, value });
   } catch (error) {
     console.error("Failed to track subscription:", error);
+  }
+}
+
+export function trackLinkClick(linkName: string, linkUrl: string): void {
+  if (typeof window === "undefined") return;
+
+  try {
+    if (typeof window.trackLinkClick === "function") {
+      window.trackLinkClick({
+        link_name: linkName,
+        link_url: linkUrl,
+      });
+    } else {
+      // Fallback implementation
+      if (window.dataLayer) {
+        window.dataLayer.push({
+          event: "link_click",
+          link_name: linkName,
+          link_url: linkUrl,
+        });
+      }
+    }
+
+    debugLog("LinkClick", { link_name: linkName, link_url: linkUrl });
+  } catch (error) {
+    console.error("Failed to track link click:", error);
   }
 }

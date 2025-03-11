@@ -13,6 +13,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { trackLinkClick } from "@/lib/analytics";
 
 const footerLinks = {
   company: [
@@ -115,6 +116,12 @@ export function SiteFooter() {
                     <Link
                       href={href}
                       className="text-sm text-white/90 dark:text-white/80 hover:text-white transition-colors"
+                      onClick={() =>
+                        trackLinkClick(
+                          "Customer Support Email",
+                          "mailto:sjuniversalpaint@gmail.com"
+                        )
+                      }
                     >
                       {label}
                     </Link>
@@ -143,6 +150,12 @@ export function SiteFooter() {
                   size="icon"
                   className="bg-white text-[#41c8d2] hover:bg-white/90"
                   aria-label="Subscribe to newsletter"
+                  onClick={() =>
+                    trackLinkClick(
+                      "Subscribe to newsletter",
+                      "mailto:sjuniversalpaint@gmail.com"
+                    )
+                  }
                 >
                   <Mail className="h-4 w-4" aria-hidden="true" />
                   <span className="sr-only">Subscribe</span>
@@ -177,7 +190,8 @@ export function SiteFooter() {
                 className="text-white hover:bg-white/20"
               />
               <p className="text-sm text-white/90 dark:text-white/80">
-                © {new Date().getFullYear()} Caught Online. All rights reserved.
+                © {new Date().getFullYear()} Caught Online. All rights
+                reserved.
               </p>
             </div>
           </div>
@@ -226,9 +240,15 @@ export function SiteFooter() {
                 size="sm"
                 className="h-10 bg-white text-[#41c8d2] hover:bg-white/90"
                 aria-label="Subscribe to newsletter"
+                onClick={() =>
+                  trackLinkClick(
+                    "Subscribe to newsletter",
+                    "mailto:sjuniversalpaint@gmail.com"
+                  )
+                }
               >
-                <Mail className="h-4 w-4" aria-hidden="true" />
                 <span className="sr-only">Subscribe</span>
+                <Mail className="h-4 w-4" aria-hidden="true" />
               </Button>
             </div>
           </div>
@@ -257,7 +277,8 @@ export function SiteFooter() {
                 className="text-white hover:bg-white/20"
               />
               <p className="text-sm text-white/90 dark:text-white/80">
-                © {new Date().getFullYear()} Caught Online. All rights reserved.
+                © {new Date().getFullYear()} Caught Online. All rights
+                reserved.
               </p>
             </div>
           </div>

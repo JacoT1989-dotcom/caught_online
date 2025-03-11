@@ -1,3 +1,75 @@
+// types/shopify.ts
+
+export interface ShopifyProduct {
+  id: string;
+  title: string;
+  handle: string;
+  description: string;
+  price: string;
+  image: {
+    src: string;
+  } | null;
+  variants: ShopifyProductVariant[];
+  options: ShopifyProductOption[];
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ShopifyProductVariant {
+  id: string;
+  title: string;
+  price: string;
+  sku: string;
+  available: boolean;
+  inventoryQuantity: number;
+}
+
+export interface ShopifyProductOption {
+  id: string;
+  name: string;
+  values: string[];
+}
+
+export interface ShopifyOrder {
+  id: string;
+  orderNumber: number;
+  email: string;
+  createdAt: string;
+  totalPrice: string;
+  subtotalPrice: string;
+  totalTax: string;
+  currencyCode: string;
+  financialStatus: string;
+  fulfillmentStatus: string;
+  customerLocale: string;
+  lineItems: ShopifyLineItem[];
+  shippingAddress: ShopifyAddress;
+  billingAddress: ShopifyAddress;
+}
+
+export interface ShopifyLineItem {
+  id: string;
+  title: string;
+  variantId: string;
+  quantity: number;
+  price: string;
+  totalDiscount: string;
+  sku: string;
+}
+
+export interface ShopifyAddress {
+  firstName: string;
+  lastName: string;
+  address1: string;
+  address2: string;
+  city: string;
+  province: string;
+  zip: string;
+  country: string;
+  phone: string;
+}
+
 export interface CheckoutLineItem {
   variantId: string;
   quantity: number;
