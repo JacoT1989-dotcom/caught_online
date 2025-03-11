@@ -20,6 +20,7 @@ export function BlogPostContent({ post }: BlogPostContentProps) {
           <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
             {post.author?.name && <span>By {post.author.name}</span>}
             <span>{format(new Date(post.publishedAt), "MMMM d, yyyy")}</span>
+            {post.blog && <span>in {post.blog}</span>}
           </div>
         </div>
       </header>
@@ -40,6 +41,23 @@ export function BlogPostContent({ post }: BlogPostContentProps) {
         className="prose prose-lg max-w-none"
         dangerouslySetInnerHTML={{ __html: post.contentHtml }}
       />
+
+      {/* Author Info (if available) */}
+      {post.author && (
+        <div className="mt-12 pt-8 border-t flex items-start gap-4">
+          {post.author.profileImage && (
+            <img
+              src={post.author.profileImage.url}
+              alt={post.author.profileImage.altText || `Photo of ${post.author.name}`}
+              className="w-16 h-16 rounded-full object-cover"
+            />
+          )}
+          <div>
+            <h3 className="font-medium text-lg">{post.author.name}</h3>
+            {post.author.bio && <p className="text-muted-foreground">{post.author.bio}</p>}
+          </div>
+        </div>
+      )}
 
       {/* Tags */}
       {post.tags && post.tags.length > 0 && (

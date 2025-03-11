@@ -10,6 +10,7 @@ import {
 import { useCheckout } from "@/hooks/use-checkout";
 import { useCart, CartItem } from "@/hooks/use-cart";
 import { useRegion, Region } from "@/hooks/use-region";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,6 +48,7 @@ export function CheckoutDialog(): JSX.Element {
 
   const { items, total: subtotal, clearCart } = useCart();
   const { selectedRegion } = useRegion();
+  const { user, isAuthenticated } = useAuth();
 
   // Calculate delivery fee based on selected region
   const deliveryFee = selectedRegion
@@ -55,17 +57,6 @@ export function CheckoutDialog(): JSX.Element {
 
   // Calculate final total with delivery fee
   const total = subtotal + deliveryFee;
-
-  // Debug logging to see if total is correctly calculated
-  useEffect(() => {
-    if (isCheckoutOpen) {
-      console.log("Checkout opened with items:", items);
-      console.log("Subtotal value:", subtotal);
-      console.log("Selected region:", selectedRegion);
-      console.log("Delivery fee:", deliveryFee);
-      console.log("Final total:", total);
-    }
-  }, [isCheckoutOpen, items, subtotal, selectedRegion, deliveryFee, total]);
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [formData, setFormData] = useState<FormData>({
@@ -76,6 +67,72 @@ export function CheckoutDialog(): JSX.Element {
     postalCode: "",
     phone: "",
   });
+
+  // Fill form data with user information if authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const newFormData = { ...formData };
+
+      // Set email from user
+      if (user.email) {
+        newFormData.email = user.email;
+      }
+
+      // Set name from user
+      if (user.firstName || user.lastName) {
+        newFormData.name =
+          `${user.firstName || ""} ${user.lastName || ""}`.trim();
+      }
+
+      // Set phone from user if available
+      if (user.phone) {
+        newFormData.phone = user.phone;
+      }
+
+      // Check if user has a default address
+      if (user.defaultAddress) {
+        // Fill in address details from default address
+        newFormData.address = user.defaultAddress.address1;
+        if (user.defaultAddress.address2) {
+          newFormData.address += `, ${user.defaultAddress.address2}`;
+        }
+        newFormData.city = user.defaultAddress.city;
+        newFormData.postalCode = user.defaultAddress.zip;
+
+        // If we have the region mapping and the user's province/city matches one of our regions,
+        // we could also set the selectedRegion here
+      }
+
+      setFormData(newFormData);
+
+      console.log("Filled form with user data:", newFormData);
+    }
+  }, [isAuthenticated, user, isCheckoutOpen]);
+
+  // Debug logging to see if total is correctly calculated
+  useEffect(() => {
+    if (isCheckoutOpen) {
+      console.log("Checkout opened with items:", items);
+      console.log("Subtotal value:", subtotal);
+      console.log("Selected region:", selectedRegion);
+      console.log("Delivery fee:", deliveryFee);
+      console.log("Final total:", total);
+      console.log("User authenticated:", isAuthenticated);
+      console.log(
+        "User has default address:",
+        user?.defaultAddress ? "Yes" : "No"
+      );
+    }
+  }, [
+    isCheckoutOpen,
+    items,
+    subtotal,
+    selectedRegion,
+    deliveryFee,
+    total,
+    isAuthenticated,
+    user,
+  ]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
