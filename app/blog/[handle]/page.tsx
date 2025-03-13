@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { Container } from "@/components/ui/container";
 import { getBlogPost } from "@/lib/contentful/blog";
 import { notFound } from "next/navigation";
