@@ -34,117 +34,7 @@ const CUSTOMER_REGISTER_MUTATION = `
   }
 `;
 
-const GET_CUSTOMER_QUERY = `
-  query getCustomer($customerAccessToken: String!) {
-    customer(customerAccessToken: $customerAccessToken) {
-      id
-      firstName
-      lastName
-      email
-      phone
-      defaultAddress {
-        id
-        address1
-        address2
-        city
-        province
-        zip
-        country
-      }
-      addresses(first: 10) {
-        edges {
-          node {
-            id
-            address1
-            address2
-            city
-            province
-            zip
-            country
-          }
-        }
-      }
-      orders(first: 10, sortKey: PROCESSED_AT, reverse: true) {
-        edges {
-          node {
-            id
-            orderNumber
-            processedAt
-            financialStatus
-            fulfillmentStatus
-            currentTotalPrice {
-              amount
-              currencyCode
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
-export async function loginCustomer(email: string, password: string) {
-  try {
-    const { data, errors } = await shopifyFetch({
-      query: CUSTOMER_LOGIN_MUTATION,
-      variables: {
-        input: {
-          email,
-          password,
-        },
-      },
-      cache: "no-store",
-    });
-
-    if (errors?.length > 0) {
-      throw new Error(errors[0].message);
-    }
-
-    if (data?.customerAccessTokenCreate?.customerUserErrors?.length > 0) {
-      throw new Error(
-        data.customerAccessTokenCreate.customerUserErrors[0].message
-      );
-    }
-
-    const { accessToken, expiresAt } =
-      data.customerAccessTokenCreate.customerAccessToken;
-    return { accessToken, expiresAt };
-  } catch (error) {
-    console.error("Login error:", error);
-    throw error;
-  }
-}
-
-export async function getCustomerData(customerAccessToken: string) {
-  try {
-    const { data, errors } = await shopifyFetch({
-      query: GET_CUSTOMER_QUERY,
-      variables: { customerAccessToken },
-      cache: "no-store",
-    });
-
-    if (errors?.length > 0) {
-      throw new Error(errors[0].message);
-    }
-
-    return data.customer;
-  } catch (error) {
-    console.error("Error fetching customer data:", error);
-    throw error;
-  }
-}
-
-export async function getCustomerDefaultPostalCode(
-  customerAccessToken: string
-): Promise<string | null> {
-  try {
-    const customerData = await getCustomerData(customerAccessToken);
-    return customerData?.defaultAddress?.zip || null;
-  } catch (error) {
-    console.error("Error getting customer postal code:", error);
-    return null;
-  }
-}
+// Update the addCustomerAddress function in lib/shopify/customer.ts
 
 export async function addCustomerAddress(
   customerAccessToken: string,
@@ -367,5 +257,117 @@ export async function registerCustomer(input: {
   } catch (error) {
     console.error("Registration error:", error);
     throw error;
+  }
+}
+
+const GET_CUSTOMER_QUERY = `
+  query getCustomer($customerAccessToken: String!) {
+    customer(customerAccessToken: $customerAccessToken) {
+      id
+      firstName
+      lastName
+      email
+      phone
+      defaultAddress {
+        id
+        address1
+        address2
+        city
+        province
+        zip
+        country
+      }
+      addresses(first: 10) {
+        edges {
+          node {
+            id
+            address1
+            address2
+            city
+            province
+            zip
+            country
+          }
+        }
+      }
+      orders(first: 10, sortKey: PROCESSED_AT, reverse: true) {
+        edges {
+          node {
+            id
+            orderNumber
+            processedAt
+            financialStatus
+            fulfillmentStatus
+            currentTotalPrice {
+              amount
+              currencyCode
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export async function loginCustomer(email: string, password: string) {
+  try {
+    const { data, errors } = await shopifyFetch({
+      query: CUSTOMER_LOGIN_MUTATION,
+      variables: {
+        input: {
+          email,
+          password,
+        },
+      },
+      cache: "no-store",
+    });
+
+    if (errors?.length > 0) {
+      throw new Error(errors[0].message);
+    }
+
+    if (data?.customerAccessTokenCreate?.customerUserErrors?.length > 0) {
+      throw new Error(
+        data.customerAccessTokenCreate.customerUserErrors[0].message
+      );
+    }
+
+    const { accessToken, expiresAt } =
+      data.customerAccessTokenCreate.customerAccessToken;
+    return { accessToken, expiresAt };
+  } catch (error) {
+    console.error("Login error:", error);
+    throw error;
+  }
+}
+
+export async function getCustomerData(customerAccessToken: string) {
+  try {
+    const { data, errors } = await shopifyFetch({
+      query: GET_CUSTOMER_QUERY,
+      variables: { customerAccessToken },
+      cache: "no-store",
+    });
+
+    if (errors?.length > 0) {
+      throw new Error(errors[0].message);
+    }
+
+    return data.customer;
+  } catch (error) {
+    console.error("Error fetching customer data:", error);
+    throw error;
+  }
+}
+
+export async function getCustomerDefaultPostalCode(
+  customerAccessToken: string
+): Promise<string | null> {
+  try {
+    const customerData = await getCustomerData(customerAccessToken);
+    return customerData?.defaultAddress?.zip || null;
+  } catch (error) {
+    console.error("Error getting customer postal code:", error);
+    return null;
   }
 }
