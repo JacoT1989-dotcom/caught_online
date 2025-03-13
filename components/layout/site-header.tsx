@@ -45,7 +45,7 @@ export function SiteHeader() {
                   Subscription
                 </Link>
                 <Link
-                  href="/recipes"
+                  href="/blog"
                   className="text-sm font-medium hover:text-[#f6424a] transition-colors"
                 >
                   Recipes
