@@ -6,17 +6,17 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { trackFormSubmit } from "@/lib/analytics";
 
 // Country options
+const COUNTRIES = [
+  { code: "ZA", name: "South Africa" },
+  { code: "US", name: "United States" },
+  { code: "GB", name: "United Kingdom" },
+  { code: "CA", name: "Canada" },
+  { code: "AU", name: "Australia" },
+];
 
 export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -27,10 +27,10 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    trackFormSubmit("Registration Form");
+
     try {
       const formData = new FormData(e.currentTarget);
-
+      
       // Prepare the user data
       const userData = {
         email: formData.get("email") as string,
@@ -48,8 +48,14 @@ export default function RegisterPage() {
         },
       };
 
-      await register(userData);
+      // Debug log - remove in production
+      console.log("Submitting registration with data:", {
+        ...userData,
+        password: "******" // Don't log the actual password
+      });
 
+      await register(userData);
+      
       toast.success("Account created successfully");
       router.push("/account");
     } catch (error) {
@@ -151,10 +157,20 @@ export default function RegisterPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="country">Country</Label>
-              <Select defaultValue="ZA" onValueChange={handleCountryChange}>
+              <Select 
+                defaultValue="ZA" 
+                onValueChange={handleCountryChange}
+              >
                 <SelectTrigger id="country">
                   <SelectValue placeholder="Select country" />
                 </SelectTrigger>
+                <SelectContent>
+                  {COUNTRIES.map((country) => (
+                    <SelectItem key={country.code} value={country.code}>
+                      {country.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
           </div>
