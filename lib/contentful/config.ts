@@ -1,14 +1,14 @@
 // lib/contentful/config.ts
-import { contentfulEnv } from '../env';
 
+// Type assertion to ensure environment variables are treated as strings
 export const CONTENTFUL_CONFIG = {
-  spaceId: contentfulEnv.CONTENTFUL_SPACE_ID,
-  accessToken: contentfulEnv.CONTENTFUL_ACCESS_TOKEN,
-  
+  spaceId: process.env.CONTENTFUL_SPACE_ID as string,
+  accessToken: process.env.CONTENTFUL_ACCESS_TOKEN as string,
+
   preview: {
-    accessToken: contentfulEnv.CONTENTFUL_PREVIEW_ACCESS_TOKEN,
-    host: 'preview.contentful.com'
+    accessToken: process.env.CONTENTFUL_PREVIEW_ACCESS_TOKEN as string,
+    host: "preview.contentful.com",
   },
-  
-  environment: contentfulEnv.CONTENTFUL_ENVIRONMENT,
+
+  environment: (process.env.CONTENTFUL_ENVIRONMENT || "master") as string,
 };
