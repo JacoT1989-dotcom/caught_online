@@ -119,7 +119,7 @@ export function SiteFooter() {
                       onClick={() =>
                         trackLinkClick(
                           "Customer Support Email",
-                          "mailto:sjuniversalpaint@gmail.com"
+                          "mailto:gareth@caughtonline.co.za"
                         )
                       }
                     >
@@ -153,7 +153,7 @@ export function SiteFooter() {
                   onClick={() =>
                     trackLinkClick(
                       "Subscribe to newsletter",
-                      "mailto:sjuniversalpaint@gmail.com"
+                      "mailto:gareth@caughtonline.co.za"
                     )
                   }
                 >
@@ -243,7 +243,7 @@ export function SiteFooter() {
                 onClick={() =>
                   trackLinkClick(
                     "Subscribe to newsletter",
-                    "mailto:sjuniversalpaint@gmail.com"
+                    "mailto:gareth@caughtonline.co.za"
                   )
                 }
               >

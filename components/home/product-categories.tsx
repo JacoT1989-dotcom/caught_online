@@ -1,8 +1,8 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import useEmblaCarousel from "embla-carousel-react";
@@ -185,14 +185,16 @@ export function ProductCategories() {
             >
               <div className="aspect-square relative">
                 <div className="absolute inset-0">
-                  <img
+                  <Image
                     src={
                       categoryImages[category.collection] ||
                       "/placeholder-product.jpg"
                     }
                     alt={category.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 25vw"
                     className={cn(
-                      "w-full h-full object-cover transition-transform duration-500",
+                      "object-cover transition-transform duration-500",
                       "group-hover:scale-110"
                     )}
                   />
@@ -230,13 +232,15 @@ export function ProductCategories() {
                   >
                     <div className="aspect-[3/4] relative">
                       <div className="absolute inset-0">
-                        <img
+                        <Image
                           src={
                             categoryImages[category.collection] ||
                             "/placeholder-product.jpg"
                           }
                           alt={category.title}
-                          className="w-full h-full object-cover"
+                          fill
+                          sizes="85vw"
+                          className="object-cover"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                       </div>

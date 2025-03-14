@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { CalendarRange, Percent, Plus, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { trackAddToCart, trackSelectItem } from "@/lib/analytics";
 
 interface ProductCardProps {
   product: {
@@ -48,12 +49,17 @@ interface ProductCardProps {
       }>;
     };
   };
+  listType?: string;
   searchParams?: {
     collection?: string;
   };
 }
 
-export function ProductCard({ product, searchParams = {} }: ProductCardProps) {
+export function ProductCard({
+  product,
+  searchParams = {},
+  listType,
+}: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const { items, addItem, removeItem } = useCart();
   const {
@@ -96,6 +102,14 @@ export function ProductCard({ product, searchParams = {} }: ProductCardProps) {
     };
 
     addItem(item);
+
+    trackAddToCart({
+      id: product.id,
+      title: product.title,
+      price: isSubscriptionMode ? discountedPrice : regularPrice,
+      variantId: variantId,
+      quantity: 1,
+    });
 
     // Only show subscription upsell if:
     // 1. Not already in subscription mode
@@ -182,6 +196,22 @@ export function ProductCard({ product, searchParams = {} }: ProductCardProps) {
     }
   };
 
+  // Add click handler for product selection tracking
+  const handleProductClick = () => {
+    // Only track if listType is provided
+    if (listType) {
+      trackSelectItem(
+        {
+          id: product.id,
+          title: product.title,
+          price: isSubscriptionMode ? discountedPrice : regularPrice,
+          variantId: variantId,
+        },
+        listType
+      );
+    }
+  };
+
   return (
     <Link
       href={`/products/${product.handle}${
@@ -192,6 +222,7 @@ export function ProductCard({ product, searchParams = {} }: ProductCardProps) {
         !isAvailable && "opacity-75",
         isHovered && "border-primary"
       )}
+      onClick={handleProductClick}
     >
       <Card
         className="h-full overflow-hidden flex flex-col"
@@ -239,8 +270,8 @@ export function ProductCard({ product, searchParams = {} }: ProductCardProps) {
                 {cartItem.subscription === "monthly"
                   ? "Monthly"
                   : cartItem.subscription === "bimonthly"
-                  ? "Every 2 Months"
-                  : "Every 3 Months"}
+                    ? "Every 2 Months"
+                    : "Every 3 Months"}
               </Badge>
             )}
           </div>

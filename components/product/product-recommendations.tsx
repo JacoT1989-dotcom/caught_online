@@ -7,24 +7,14 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import useEmblaCarousel from "embla-carousel-react";
+import {
+  getProductRecommendations,
+  getProductsByType,
+  getRandomProducts,
+} from "@/lib/shopify/recommendations"; // Adjust import path as needed
 
-// Updated Product type to match both components
-interface ProductVariant {
-  id: string;
-  availableForSale: boolean;
-  price: {
-    amount: string;
-    currencyCode: string;
-  };
-  compareAtPrice?: {
-    amount: string;
-    currencyCode: string;
-  };
-  title?: string;
-  quantityAvailable?: number;
-}
-
-// Updated Product interface to match both components
+// Use the exact same Product interface as in your ProductCard component
+// to ensure type compatibility
 interface Product {
   id: string;
   title: string;
@@ -43,19 +33,32 @@ interface Product {
   };
   variants: {
     edges: Array<{
-      node: ProductVariant;
+      node: {
+        id: string;
+        availableForSale: boolean;
+        price: {
+          amount: string;
+          currencyCode: string;
+        };
+        compareAtPrice?: {
+          amount: string;
+          currencyCode: string;
+        };
+      };
     }>;
   };
 }
 
 interface ProductRecommendationsProps {
   productId: string;
-  type?: "recommended" | "popular" | "new";
+  type?: "recommended" | "popular" | "new" | "featured" | "bestseller";
+  count?: number;
 }
 
 export function ProductRecommendations({
   productId,
   type = "recommended",
+  count = 4,
 }: ProductRecommendationsProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,60 +97,60 @@ export function ProductRecommendations({
 
   useEffect(() => {
     async function loadProducts() {
+      setLoading(true);
       try {
-        // Generate mock products with unique IDs using timestamp and index
-        const timestamp = Date.now();
-        const mockProducts: Product[] = Array(4)
-          .fill(null)
-          .map((_, index) => ({
-            id: `${type}-${timestamp}-${index}`,
-            title: `Sample Product ${index + 1}`,
-            handle: `sample-product-${index + 1}`,
-            description: "Sample description",
-            availableForSale: true,
-            featuredImage: {
-              url: "https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?q=80&w=2574",
-              altText: `Sample Product ${index + 1}`,
-            },
-            priceRange: {
-              minVariantPrice: {
-                amount: "199.00",
-                currencyCode: "ZAR",
-              },
-            },
-            variants: {
-              edges: [
-                {
-                  node: {
-                    id: `variant-${type}-${timestamp}-${index}`,
-                    availableForSale: true,
-                    price: {
-                      amount: "199.00",
-                      currencyCode: "ZAR",
-                    },
-                    // Add these properties to match the ProductVariant type
-                    title: `Sample Product ${index + 1}`,
-                    quantityAvailable: 10,
-                  },
-                },
-              ],
-            },
-          }));
-        setProducts(mockProducts.filter((p) => p.id !== productId));
+        let fetchedProducts: Product[] = [];
+
+        // Fetch different products based on the type
+        if (type === "recommended") {
+          fetchedProducts = await getProductRecommendations(productId);
+
+          // If we don't get enough recommendations, supplement with random products
+          if (fetchedProducts.length < count) {
+            const randomProducts = await getRandomProducts(
+              count - fetchedProducts.length
+            );
+            fetchedProducts = [...fetchedProducts, ...randomProducts];
+          }
+        } else {
+          // For 'popular', 'new', or other types
+          fetchedProducts = await getProductsByType(type, count + 1); // Get one extra to account for filtering
+        }
+
+        // Filter out the current product if it's in the results
+        // Fix for the TypeScript error by explicitly typing the parameter
+        const filteredProducts = fetchedProducts.filter(
+          (p: Product) => p.id !== productId
+        );
+
+        // Limit to requested count
+        setProducts(filteredProducts.slice(0, count));
       } catch (error) {
-        console.error("Error loading recommendations:", error);
+        console.error(`Error loading ${type} products:`, error);
+
+        // Attempt to fetch random products as fallback
+        try {
+          const fallbackProducts = await getRandomProducts(count);
+          setProducts(
+            fallbackProducts.filter((p: Product) => p.id !== productId)
+          );
+        } catch (fallbackError) {
+          console.error("Failed to fetch fallback products:", fallbackError);
+        }
       } finally {
         setLoading(false);
       }
     }
 
-    loadProducts();
-  }, [productId, type]);
+    if (productId) {
+      loadProducts();
+    }
+  }, [productId, type, count]);
 
   if (loading) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[...Array(4)].map((_, i) => (
+        {[...Array(count)].map((_, i) => (
           <div
             key={`skeleton-${i}`}
             className="aspect-[4/3] animate-pulse bg-muted rounded-lg"
@@ -158,13 +161,13 @@ export function ProductRecommendations({
   }
 
   if (!products.length) {
-    return null;
+    return null; // Hide the section if there are no products
   }
 
   return (
     <div className="relative">
       {/* Navigation Buttons - Desktop Only */}
-      {!isMobile && (
+      {!isMobile && products.length > 1 && (
         <>
           <Button
             variant="outline"
@@ -200,7 +203,8 @@ export function ProductRecommendations({
                   : "flex-[0_0_25%]" // 4 items per row on desktop
               )}
             >
-              <ProductCard product={product} />
+              {/* Remove the listType prop to fix the type error */}
+              <ProductCard product={product} searchParams={{}} />
             </div>
           ))}
         </div>
