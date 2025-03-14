@@ -48,6 +48,7 @@ interface ShopifyAnalyticsType {
 declare global {
   interface Window {
     dataLayer?: any[];
+    trackSelectItem?: (product: TrackableProduct, listName?: string) => void;
     fbq?: any;
     gtag?: {
       apiResult?: {
@@ -177,6 +178,65 @@ export function initAnalytics(): string {
           console.error('Analytics error:', error);
         }
       };
+
+      window.trackSelectItem = function(product, listName) {
+  try {
+    // Validate product
+    if (!product || !product.id || !product.title) {
+      console.error('Invalid product data for trackSelectItem', product);
+      return;
+    }
+    
+    // Track in GTM
+    if (window.dataLayer) {
+      window.dataLayer.push({
+        event: 'select_item',
+        ecommerce: {
+          item_list_name: listName || 'Product List',
+          items: [{
+            item_id: product.id,
+            item_name: product.title,
+            price: product.price,
+            currency: '${config.CURRENCY}',
+            quantity: product.quantity || 1
+          }]
+        },
+        cd_session_id: window.gtag ? window.gtag.apiResult?.session_id : undefined,
+        cd_client_id: window.gtag ? window.gtag.apiResult?.client_id : undefined
+      });
+    }
+    
+    // Track in Facebook Pixel
+    if (window.fbq) {
+      window.fbq('trackCustom', 'SelectItem', {
+        content_ids: [product.id],
+        content_name: product.title,
+        content_type: 'product',
+        value: product.price,
+        currency: '${config.CURRENCY}',
+        content_category: listName
+      });
+    }
+    
+    // Track in Shopify Analytics
+    if (window.ShopifyAnalytics?.lib?.trackProductRecommendationClick) {
+      window.ShopifyAnalytics.lib.trackProductRecommendationClick({
+        id: product.id,
+        name: product.title,
+        list: listName || 'Product List',
+        price: product.price,
+        currency: '${config.CURRENCY}',
+        variant_id: product.variantId
+      });
+    }
+    
+    if (window.DEBUG_ANALYTICS) {
+      console.log('📊 Select Item tracked', { product, listName });
+    }
+  } catch (error) {
+    console.error('Analytics error:', error);
+  }
+};
 
       window.trackFormSubmit = function(formData) {
   try {
@@ -772,5 +832,54 @@ export function trackUserData(): void {
     });
   } catch (error) {
     console.error("Failed to track user data:", error);
+  }
+}
+
+export function trackSelectItem(
+  product: TrackableProduct,
+  listName?: string
+): void {
+  if (typeof window === "undefined") return;
+
+  try {
+    if (typeof window.trackSelectItem === "function") {
+      window.trackSelectItem(product, listName);
+    } else {
+      // Fallback implementation
+      if (window.dataLayer) {
+        window.dataLayer.push({
+          event: "select_item",
+          ecommerce: {
+            item_list_name: listName || "Product List",
+            items: [
+              {
+                item_id: product.id,
+                item_name: product.title,
+                price: product.price,
+                currency: config.CURRENCY,
+                quantity: product.quantity || 1,
+              },
+            ],
+          },
+          cd_session_id: window.gtag?.apiResult?.session_id,
+          cd_client_id: window.gtag?.apiResult?.client_id,
+        });
+      }
+
+      if (window.fbq) {
+        window.fbq("trackCustom", "SelectItem", {
+          content_ids: [product.id],
+          content_name: product.title,
+          content_type: "product",
+          value: product.price,
+          currency: config.CURRENCY,
+          content_category: listName,
+        });
+      }
+    }
+
+    debugLog("SelectItem", { product, listName });
+  } catch (error) {
+    console.error("Failed to track item selection:", error);
   }
 }

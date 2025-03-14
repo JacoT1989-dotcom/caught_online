@@ -347,3 +347,181 @@ export async function getProduct(handle: string) {
     return null;
   }
 }
+
+// Add these queries to your products.ts file
+
+const GET_PRODUCT_RECOMMENDATIONS_QUERY = `
+  query GetProductRecommendations($productId: ID!) {
+    productRecommendations(productId: $productId) {
+      id
+      title
+      handle
+      description
+      availableForSale
+      productType
+      tags
+      featuredImage {
+        url
+        altText
+      }
+      priceRange {
+        minVariantPrice {
+          amount
+          currencyCode
+        }
+      }
+      variants(first: 1) {
+        edges {
+          node {
+            id
+            availableForSale
+            price {
+              amount
+              currencyCode
+            }
+            compareAtPrice {
+              amount
+              currencyCode
+            }
+            quantityAvailable
+          }
+        }
+      }
+    }
+  }
+`;
+
+const GET_PRODUCTS_BY_TYPE_QUERY = `
+  query GetProductsByType($type: String!, $first: Int = 4) {
+    products(first: $first, query: $type) {
+      edges {
+        node {
+          id
+          title
+          handle
+          description
+          availableForSale
+          productType
+          tags
+          featuredImage {
+            url
+            altText
+          }
+          priceRange {
+            minVariantPrice {
+              amount
+              currencyCode
+            }
+          }
+          variants(first: 1) {
+            edges {
+              node {
+                id
+                availableForSale
+                price {
+                  amount
+                  currencyCode
+                }
+                compareAtPrice {
+                  amount
+                  currencyCode
+                }
+                quantityAvailable
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+/**
+ * Get product recommendations from Shopify
+ * @param productId The Shopify product ID to get recommendations for
+ * @returns Array of recommended products
+ */
+export async function getProductRecommendations(productId: string) {
+  if (!productId) {
+    throw new Error("Product ID is required");
+  }
+
+  try {
+    const { data } = await shopifyFetch({
+      query: GET_PRODUCT_RECOMMENDATIONS_QUERY,
+      variables: { productId },
+    });
+
+    const recommendedProducts = data?.productRecommendations || [];
+
+    return recommendedProducts.map((product: any) => ({
+      id: product.id,
+      title: product.title,
+      handle: product.handle,
+      description: product.description,
+      availableForSale: product.availableForSale,
+      productType: product.productType,
+      tags: product.tags,
+      featuredImage: product.featuredImage,
+      priceRange: product.priceRange,
+      variants: product.variants,
+    }));
+  } catch (error) {
+    console.error("Error fetching product recommendations:", error);
+    return [];
+  }
+}
+
+/**
+ * Get popular, new, or other categorized products
+ * @param type Type of products to fetch (popular, new, etc.)
+ * @param first Number of products to fetch
+ * @returns Array of products
+ */
+export async function getProductsByType(
+  type: string = "popular",
+  first: number = 4
+) {
+  let query = "";
+
+  switch (type) {
+    case "popular":
+      query = "tag:popular";
+      break;
+    case "new":
+      query = "tag:new";
+      break;
+    default:
+      query = `product_type:${type}`;
+  }
+
+  try {
+    const { data } = await shopifyFetch({
+      query: GET_PRODUCTS_BY_TYPE_QUERY,
+      variables: {
+        type: query,
+        first,
+      },
+    });
+
+    if (!data?.products?.edges) {
+      return [];
+    }
+
+    return data.products.edges.map(({ node }: any) => ({
+      id: node.id,
+      title: node.title,
+      handle: node.handle,
+      description: node.description,
+      availableForSale: node.availableForSale,
+      productType: node.productType,
+      tags: node.tags,
+      featuredImage: node.featuredImage,
+      priceRange: node.priceRange,
+      variants: node.variants,
+    }));
+  } catch (error) {
+    console.error(`Error fetching ${type} products:`, error);
+    return [];
+  }
+}

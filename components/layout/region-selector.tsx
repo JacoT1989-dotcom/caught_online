@@ -1,28 +1,28 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { useRegion, type Region } from '@/hooks/use-region';
-import { MapPin } from 'lucide-react';
+} from "@/components/ui/dialog";
+import { useRegion, type Region } from "@/hooks/use-region";
+import { MapPin } from "lucide-react";
 
 const regions = [
-  { id: 'cape-town', name: 'Cape Town', delivery: 'Next Day Delivery' },
-  { id: 'johannesburg', name: 'Johannesburg', delivery: 'Next Day Delivery' },
-  { id: 'pretoria', name: 'Pretoria', delivery: 'Next Day Delivery' },
-  { id: 'durban', name: 'Durban', delivery: 'Every Friday' },
+  { id: "cape-town", name: "Cape Town", delivery: "Next Day Delivery" },
+  { id: "johannesburg", name: "Johannesburg", delivery: "Next Day Delivery" },
+  { id: "pretoria", name: "Pretoria", delivery: "Next Day Delivery" },
+  { id: "durban", name: "Durban", delivery: "Every Friday" },
 ] as const;
 
 export function RegionSelector() {
@@ -41,11 +41,14 @@ export function RegionSelector() {
     setOpen(false);
   };
 
-  const selectedRegionData = regions.find(r => r.id === selectedRegion);
+  const selectedRegionData = regions.find((r) => r.id === selectedRegion);
 
   return (
     <>
-      <Select value={selectedRegion || undefined} onValueChange={handleRegionChange}>
+      <Select
+        value={selectedRegion || undefined}
+        onValueChange={handleRegionChange}
+      >
         <SelectTrigger className="w-[180px]">
           <div className="flex items-center gap-2">
             <MapPin className="h-4 w-4" />
