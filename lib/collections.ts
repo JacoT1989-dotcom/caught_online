@@ -42,33 +42,37 @@ export const collections: Collection[] = [
     handle: "wild-caught",
     description: "Sustainably wild-caught seafood",
     subcollections: [
-      { id: "wild-fish", title: "Fish", handle: "wild-caught-fish" },
+      { id: "wild-fish", title: "Fish", handle: "fish-wild-caught" },
       {
         id: "wild-shellfish",
         title: "Shellfish",
-        handle: "wild-caught-shellfish",
+        handle: "shellfish-wild-caught",
       },
     ],
   },
   {
     id: "fresh",
     title: "Fresh",
-    handle: "fresh",
+    handle: "fresh-fish",
     description: "Freshly caught daily",
     subcollections: [
-      { id: "fresh-salmon", title: "Salmon", handle: "fresh-salmon" },
-      { id: "fresh-tuna", title: "Tuna", handle: "fresh-tuna" },
-      { id: "fresh-oysters", title: "Oysters", handle: "fresh-oysters" },
-      { id: "fresh-mussels", title: "Mussels", handle: "fresh-mussels" },
+      { id: "fresh-salmon", title: "Salmon", handle: "salmon" },
+      { id: "fresh-tuna", title: "Tuna", handle: "tuna" },
+      { id: "fresh-oysters", title: "Oysters", handle: "oysters" },
+      { id: "fresh-mussels", title: "Mussels", handle: "mussels" },
     ],
   },
   {
     id: "crumbed",
     title: "Crumbed",
-    handle: "crumbed-coated",
+    handle: "crumbed-coated-seafood",
     description: "Deliciously crumbed seafood options",
     subcollections: [
-      { id: "fishcakes", title: "Fishcakes", handle: "fishcakes" },
+      {
+        id: "fishcakes",
+        title: "Fishcakes",
+        handle: "fishcakes-crumbed-coated",
+      },
       { id: "panko", title: "Panko", handle: "panko" },
       { id: "tempura", title: "Tempura", handle: "tempura" },
     ],
@@ -76,13 +80,12 @@ export const collections: Collection[] = [
   {
     id: "smoked",
     title: "Smoked",
-    handle: "smoked-cured",
+    handle: "smoked-salmon-trout",
     description: "Traditionally smoked and cured seafood",
     subcollections: [
-      { id: "smoked-fish", title: "Smoked", handle: "smoked" },
       { id: "cured-fish", title: "Cured", handle: "cured" },
-      { id: "smoked-salmon", title: "Salmon", handle: "smoked-salmon" },
-      { id: "smoked-trout", title: "Trout", handle: "smoked-trout" },
+      { id: "smoked-salmon", title: "Salmon", handle: "salmon-cured" },
+      { id: "smoked-trout", title: "Trout", handle: "trout-cured" },
     ],
   },
 ];
