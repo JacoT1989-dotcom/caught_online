@@ -289,7 +289,7 @@ export function ProductDetails({ product }: ProductDetailsProps) {
       {/* Related Products */}
       <section>
         <h2 className="text-2xl font-bold mb-6">You May Also Like</h2>
-        <ProductRecommendations productId={product.id} />
+        <ProductRecommendations productId={product.id} count={10} />
       </section>
 
       {/* Delivery Information */}
@@ -298,7 +298,11 @@ export function ProductDetails({ product }: ProductDetailsProps) {
       {/* More Products */}
       <section>
         <h2 className="text-2xl font-bold mb-6">Popular Products</h2>
-        <ProductRecommendations productId={product.id} type="popular" />
+        <ProductRecommendations
+          productId={product.id}
+          type="popular"
+          count={10}
+        />
       </section>
 
       {/* Recipes */}
@@ -315,7 +319,7 @@ export function ProductDetails({ product }: ProductDetailsProps) {
       {/* New Products */}
       <section>
         <h2 className="text-2xl font-bold mb-6">New Arrivals</h2>
-        <ProductRecommendations productId={product.id} type="new" />
+        <ProductRecommendations productId={product.id} type="new" count={10} />
       </section>
 
       {/* Reviews */}

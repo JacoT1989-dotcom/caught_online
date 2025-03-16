@@ -72,8 +72,8 @@ const categories: Category[] = [
   {
     title: "Crumbed & Coated",
     description: "Ready to cook favorites",
-    href: "/products?collection=crumbed-coated",
-    collection: "crumbed-coated",
+    href: "/products?collection=crumbed-coated-seafood",
+    collection: "crumbed-coated-seafood",
   },
 ];
 

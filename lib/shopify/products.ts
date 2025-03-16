@@ -392,7 +392,7 @@ const GET_PRODUCT_RECOMMENDATIONS_QUERY = `
 `;
 
 const GET_PRODUCTS_BY_TYPE_QUERY = `
-  query GetProductsByType($type: String!, $first: Int = 4) {
+  query GetProductsByType($type: String!, $first: Int = 10) {
     products(first: $first, query: $type) {
       edges {
         node {
@@ -480,7 +480,7 @@ export async function getProductRecommendations(productId: string) {
  */
 export async function getProductsByType(
   type: string = "popular",
-  first: number = 4
+  first: number = 10
 ) {
   let query = "";
 
