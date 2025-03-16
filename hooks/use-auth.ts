@@ -13,6 +13,7 @@ interface AuthState {
   accessToken: string | null;
   expiresAt: string | null;
   user: any | null;
+  customerAccessToken: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (userData: {
     email: string;
@@ -41,6 +42,7 @@ export const useAuth = create<AuthState>()(
       accessToken: null,
       expiresAt: null,
       user: null,
+      customerAccessToken: null,
 
       login: async (email: string, password: string) => {
         try {
@@ -55,6 +57,7 @@ export const useAuth = create<AuthState>()(
             accessToken,
             expiresAt,
             user: userData,
+            customerAccessToken: accessToken,
           });
         } catch (error) {
           throw error;
@@ -83,6 +86,7 @@ export const useAuth = create<AuthState>()(
           accessToken: null,
           expiresAt: null,
           user: null,
+          customerAccessToken: null,
         });
 
         // Don't need to clear the cart here - the AuthProvider will handle it
@@ -133,6 +137,7 @@ export const useAuth = create<AuthState>()(
             set({
               accessToken: newToken,
               expiresAt: newExpiry,
+              customerAccessToken: newToken,
             });
           } catch (error) {
             console.error("Failed to refresh token:", error);
@@ -146,6 +151,7 @@ export const useAuth = create<AuthState>()(
       partialize: (state) => ({
         accessToken: state.accessToken,
         expiresAt: state.expiresAt,
+        customerAccessToken: state.accessToken,
         user: {
           id: state.user?.id,
           email: state.user?.email,

@@ -371,3 +371,64 @@ export async function getCustomerDefaultPostalCode(
     return null;
   }
 }
+
+const GET_CUSTOMER_ORDERS_QUERY = `
+  query getCustomerOrders($customerAccessToken: String!) {
+    customer(customerAccessToken: $customerAccessToken) {
+      orders(first: 10, sortKey: PROCESSED_AT, reverse: true) {
+        edges {
+          node {
+            id
+            orderNumber
+            processedAt
+            financialStatus
+            fulfillmentStatus
+            totalPriceV2: currentTotalPrice {
+              amount
+              currencyCode
+            }
+            lineItems(first: 10) {
+              edges {
+                node {
+                  title
+                  quantity
+                  originalTotalPrice {
+                    amount
+                    currencyCode
+                  }
+                  variant {
+                    id
+                    title
+                    image {
+                      url
+                      altText
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export async function getCustomerOrders(customerAccessToken: string) {
+  try {
+    const { data, errors } = await shopifyFetch({
+      query: GET_CUSTOMER_ORDERS_QUERY,
+      variables: { customerAccessToken },
+      cache: "no-store",
+    });
+
+    if (errors?.length > 0) {
+      throw new Error(errors[0].message);
+    }
+
+    return data.customer?.orders || { edges: [] };
+  } catch (error) {
+    console.error("Error fetching customer orders:", error);
+    return { edges: [] };
+  }
+}

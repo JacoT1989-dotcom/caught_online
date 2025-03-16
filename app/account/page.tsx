@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,19 +8,71 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import { format } from "date-fns";
-import { Package2, User, MapPin, LogOut, CalendarRange } from "lucide-react";
+import {
+  Package2,
+  User,
+  MapPin,
+  LogOut,
+  CalendarRange,
+  Loader2,
+} from "lucide-react";
 import { SubscriptionsList } from "@/components/subscriptions/subscriptions-list";
 import Image from "next/image";
+import { OrdersResponse } from "@/types/orders";
 
 export default function AccountPage() {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user, logout, accessToken } = useAuth();
   const router = useRouter();
+  const [orders, setOrders] = useState<OrdersResponse>({ edges: [] });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
       router.push("/login");
     }
   }, [isAuthenticated, router]);
+
+  // Fetch orders when the component mounts and the user is authenticated
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (isAuthenticated && accessToken) {
+        setLoading(true);
+        try {
+          const response = await fetch("/api/customer/orders", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              customerAccessToken: accessToken,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to fetch orders");
+          }
+
+          const data = await response.json();
+          console.log("Response from API:", data);
+          console.log("Orders from API:", data.customer?.orders);
+          console.log(
+            "Order count:",
+            data.customer?.orders?.edges?.length || 0
+          );
+
+          if (data.customer?.orders) {
+            setOrders(data.customer.orders);
+          }
+        } catch (error) {
+          console.error("Error fetching orders:", error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchOrders();
+  }, [isAuthenticated, accessToken]);
 
   if (!isAuthenticated || !user) {
     return (
@@ -77,8 +129,13 @@ export default function AccountPage() {
         </TabsList>
 
         <TabsContent value="orders" className="space-y-4">
-          {user.orders.edges.length > 0 ? (
-            user.orders.edges.map(({ node: order }: any) => (
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <span className="ml-2">Loading orders...</span>
+            </div>
+          ) : orders.edges.length > 0 ? (
+            orders.edges.map(({ node: order }) => (
               <Card key={order.id} className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
@@ -94,17 +151,19 @@ export default function AccountPage() {
                       {formatPrice(parseFloat(order.totalPriceV2.amount))}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {order.fulfillmentStatus}
+                      {order.fulfillmentStatus || "Unfulfilled"}
                     </p>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  {order.lineItems.edges.map(({ node: item }: any) => (
-                    <div key={item.id} className="flex items-center gap-4">
+                  {order.lineItems.edges.map(({ node: item }, index) => (
+                    <div key={index} className="flex items-center gap-4">
                       {item.variant?.image && (
                         <Image
                           src={item.variant.image.url}
                           alt={item.variant.image.altText || item.title}
+                          width={64}
+                          height={64}
                           className="h-16 w-16 object-cover rounded"
                         />
                       )}
@@ -173,8 +232,8 @@ export default function AccountPage() {
                   <p>{user.defaultAddress.address2}</p>
                 )}
                 <p>
-                  t{user.defaultAddress.city}, {user.defaultAddress.province}{" "}
-                  {user.defaultAddress.zip}es
+                  {user.defaultAddress.city}, {user.defaultAddress.province}{" "}
+                  {user.defaultAddress.zip}
                 </p>
                 <p>{user.defaultAddress.country}</p>
               </div>

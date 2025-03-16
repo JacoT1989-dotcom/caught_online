@@ -92,7 +92,7 @@ export async function getProductRecommendations(productId: string) {
  */
 export async function getProductsByType(
   type: string = "popular",
-  first: number = 4
+  first: number = 10
 ) {
   // Convert type to query syntax
   let query = "";
@@ -176,7 +176,7 @@ export async function getProductsByType(
 /**
  * Get random products as fallback
  */
-export async function getRandomProducts(count: number = 4) {
+export async function getRandomProducts(count: number = 10) {
   const query = `
     query GetRandomProducts($first: Int!) {
       products(first: $first) {

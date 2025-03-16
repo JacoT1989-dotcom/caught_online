@@ -149,25 +149,21 @@ export const GET_PRODUCTS_WITH_INVENTORY = `
           title
           handle
           availableForSale
-          variants(first: 1) {
+          featuredImage {
+            url
+            altText
+          }
+          variants(first: 10) {
             edges {
               node {
                 id
+                title
                 availableForSale
-                quantityAvailable
-                inventoryItem {
-                  inventoryLevels(first: 10) {
-                    edges {
-                      node {
-                        available
-                        location {
-                          id
-                          name
-                        }
-                      }
-                    }
-                  }
+                price {
+                  amount
+                  currencyCode
                 }
+                quantityAvailable
               }
             }
           }
