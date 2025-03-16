@@ -108,7 +108,7 @@ export function CheckoutDialog(): JSX.Element {
 
       console.log("Filled form with user data:", newFormData);
     }
-  }, [isAuthenticated, user, isCheckoutOpen]);
+  }, [isAuthenticated, user, isCheckoutOpen, formData]);
 
   // Debug logging to see if total is correctly calculated
   useEffect(() => {
