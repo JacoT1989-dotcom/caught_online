@@ -11,6 +11,7 @@ import { ProductGridSection } from "@/components/home/product-grid-section";
 import { SustainabilityPreview } from "@/components/home/sustainability-preview";
 import { getProducts } from "@/lib/shopify/products";
 import { UserDataTracker } from "@/components/analytics/UserDataTracker";
+import { ProductRecommendations } from "@/components/product/product-recommendations";
 
 // Set appropriate revalidation time for this page
 export const revalidate = 3600; // Revalidate every hour
@@ -41,10 +42,14 @@ export default async function HomePage() {
         fallback={<div className="h-96 animate-pulse bg-muted rounded-lg" />}
       >
         {featuredProducts.length > 0 ? (
-          <ProductGridSection
-            title="Featured Products"
-            products={featuredProducts}
-          />
+          <section>
+            <h2 className="text-2xl font-bold mb-6">Featured Products</h2>
+            <ProductRecommendations
+              productId={featuredProducts[0]?.id}
+              type="featured"
+              count={10}
+            />
+          </section>
         ) : (
           <div className="container py-12">
             <h2 className="text-2xl font-bold text-center">
