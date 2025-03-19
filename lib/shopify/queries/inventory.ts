@@ -1,3 +1,5 @@
+//lib/shopify/queries/inventory.ts
+
 export const GET_PRODUCT_INVENTORY = `
   query GetProductInventory($handle: String!) {
     product(handle: $handle) {

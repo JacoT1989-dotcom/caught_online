@@ -1,18 +1,8 @@
-// @/lib/reviews/stamped.ts
-
 export const STAMPED_CONFIG = {
   storeHash: process.env.NEXT_PUBLIC_STAMPED_STORE_HASH || "151250",
-  publicKey:
-    process.env.NEXT_PUBLIC_STAMPED_PUBLIC_KEY ||
-    "pubkey-4R57319D5548L8eyo3k03s5CiWb08O",
+  publicKey: process.env.NEXT_PUBLIC_STAMPED_PUBLIC_KEY || "pubkey-4R57319D5548L8eyo3k03s5CiWb08O",
   apiUrl: "https://stamped.io/api/v2",
 } as const;
-
-// Define a proper interface for the rating summary
-export interface StampedRatingSummary {
-  stars: number;
-  count: number;
-}
 
 export async function fetchStampedStats(productId?: string) {
   const url = productId
@@ -39,12 +29,12 @@ export async function fetchStampedStats(productId?: string) {
   }
 }
 
-/**
- * Fetches the overall rating summary for the store or a specific product
- */
-export async function fetchRatingSummary(
-  productId?: string
-): Promise<StampedRatingSummary> {
+export interface StampedRatingSummary {
+  stars: number;
+  count: number;
+}
+
+export async function fetchRatingSummary(productId?: string): Promise<StampedRatingSummary> {
   try {
     const data = await fetchStampedStats(productId);
 
@@ -54,9 +44,6 @@ export async function fetchRatingSummary(
     };
   } catch (error) {
     console.error("Error fetching rating summary:", error);
-    return {
-      stars: 0,
-      count: 0,
-    };
+    return { stars: 0, count: 0 };
   }
 }

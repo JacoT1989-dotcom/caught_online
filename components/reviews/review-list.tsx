@@ -1,90 +1,125 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { getProductReviews, Review } from "@/lib/reviews/stamped";
-import { ReviewCard } from "./review-card";
-import { ReviewForm } from "./review-form";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
-import { RatingSummary } from "./rating-summary";
+import React, { useState, useEffect } from 'react';
+import { getProductReviews, Review } from '@/lib/reviews/stamped';
+import ReviewCard from '@/components/reviews/review-card';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 interface ReviewListProps {
   productId: string;
 }
 
-export function ReviewList({ productId }: ReviewListProps) {
-  const [showReviewForm, setShowReviewForm] = useState(false);
-  const [sortBy, setSortBy] = useState("dateCreated");
+export default function ReviewList({ productId }: ReviewListProps) {
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
-  const {
-    data: reviews,
-    isLoading,
-    error,
-  } = useQuery<Review[]>({
-    queryKey: ["reviews", productId, sortBy],
-    queryFn: () => getProductReviews(productId),
-  });
+  // Fetch initial reviews
+  useEffect(() => {
+    const fetchReviews = async () => {
+      setLoading(true);
+      try {
+        const fetchedReviews = await getProductReviews(productId, 1);
+        setReviews(fetchedReviews);
+        setHasMore(fetchedReviews.length === 10); // Assuming 10 reviews per page
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (isLoading) {
+    fetchReviews();
+  }, [productId]);
+
+  // Load more reviews
+  const loadMoreReviews = async () => {
+    if (loadingMore || !hasMore) return;
+    
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const moreReviews = await getProductReviews(productId, nextPage);
+      
+      if (moreReviews.length > 0) {
+        setReviews(prevReviews => [...prevReviews, ...moreReviews]);
+        setPage(nextPage);
+        setHasMore(moreReviews.length === 10);
+      } else {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error('Error loading more reviews:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  // Handle helpful vote
+  const handleVoteHelpful = async (reviewId: string) => {
+    // Implement logic to vote review as helpful
+    // This would typically involve an API call to Stamped.io
+    console.log(`Voted review ${reviewId} as helpful`);
+    
+    // For now, we'll just update the UI optimistically
+    setReviews(prevReviews => 
+      prevReviews.map(review => 
+        review.id === reviewId 
+          ? { ...review, helpfulVotes: review.helpfulVotes + 1 } 
+          : review
+      )
+    );
+  };
+
+  if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
       </div>
     );
   }
 
-  if (error) {
+  if (reviews.length === 0) {
     return (
-      <div className="text-center py-8 text-red-500">
-        Failed to load reviews. Please try again later.
+      <div className="rounded-lg border border-gray-200 bg-gray-50 p-6 text-center">
+        <p className="text-gray-500">No reviews yet. Be the first to review this product!</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Customer Reviews</h2>
-        <Button onClick={() => setShowReviewForm(true)}>Write a Review</Button>
-      </div>
-
-      <RatingSummary productId={productId} />
-
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          {reviews?.length || 0} reviews
-        </p>
-        <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="dateCreated">Most Recent</SelectItem>
-            <SelectItem value="rating">Highest Rating</SelectItem>
-            <SelectItem value="helpful">Most Helpful</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-4">
-        {reviews?.map((review) => (
-          <ReviewCard key={review.id} review={review} />
+    <div className="space-y-4">
+      <div className="divide-y divide-gray-200">
+        {reviews.map(review => (
+          <ReviewCard 
+            key={review.id} 
+            review={review} 
+            onVoteHelpful={handleVoteHelpful}
+          />
         ))}
       </div>
-
-      {showReviewForm && (
-        <ReviewForm
-          productId={productId}
-          onClose={() => setShowReviewForm(false)}
-        />
+      
+      {hasMore && (
+        <div className="flex justify-center pt-4">
+          <Button 
+            onClick={loadMoreReviews} 
+            disabled={loadingMore}
+            variant="outline"
+            className="text-sm"
+          >
+            {loadingMore ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              'Load More Reviews'
+            )}
+          </Button>
+        </div>
       )}
     </div>
   );
