@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { ProductCard } from "./product-card";
 import { useShopDeals } from "@/hooks/use-shop-deals";
 import { useShopSort } from "@/hooks/use-shop-sort";
@@ -63,6 +63,10 @@ export function ProductGrid({
   const { sortKey } = useShopSort();
   const { filters, clearFilters } = useShopFilters();
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(8); // Number of items per page
+
   // First filter by search query
   const searchFilteredProducts = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
@@ -101,6 +105,25 @@ export function ProductGrid({
     return sortProducts(filteredProducts, sortKey);
   }, [filteredProducts, sortKey]);
 
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentProducts = sortedProducts.slice(indexOfFirstItem, indexOfLastItem);
+
+  const totalPages = Math.ceil(sortedProducts.length / itemsPerPage);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
   // Show empty state if no products match filters
   if (sortedProducts.length === 0) {
     return (
@@ -125,23 +148,46 @@ export function ProductGrid({
   }
 
   return (
-    <div
-      className={cn(
-        "grid gap-4 sm:gap-6",
-        "grid-cols-2 md:grid-cols-4",
-        "auto-rows-fr",
-        className
-      )}
-    >
-      {sortedProducts.map((product) => (
-        <ProductCard
-          key={product.id}
-          product={{
-            ...product,
-            description: product.description || "", // Provide default value for optional description
-          }}
-        />
-      ))}
+    <div>
+      <div
+        className={cn(
+          "grid gap-4 sm:gap-6",
+          "grid-cols-2 md:grid-cols-4",
+          "auto-rows-fr",
+          className
+        )}
+      >
+        {currentProducts.map((product) => (
+          <ProductCard
+            key={product.id}
+            product={{
+              ...product,
+              description: product.description || "", // Provide default value for optional description
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="flex justify-center items-center mt-8 space-x-4">
+        <Button
+          onClick={handlePreviousPage}
+          disabled={currentPage === 1}
+          variant="outline"
+        >
+          Prev
+        </Button>
+        <span>
+          Page {currentPage} of {totalPages}
+        </span>
+        <Button
+          onClick={handleNextPage}
+          disabled={currentPage === totalPages}
+          variant="outline"
+        >
+          Next
+        </Button>
+      </div>
     </div>
   );
 }

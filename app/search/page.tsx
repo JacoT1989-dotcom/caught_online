@@ -1,12 +1,13 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { SearchInput } from '@/components/search/search-input';
-import { useShopSearch } from '@/hooks/use-shop-search';
-import { ProductGridSection } from '@/components/home/product-grid-section';
-import { useEffect, useState } from 'react';
-import { getProducts } from '@/lib/shopify/products';
-import type { Product } from '@/types/product';
+import { useRouter } from "next/navigation";
+import { SearchInput } from "@/components/search/search-input";
+import { useShopSearch } from "@/hooks/use-shop-search";
+import { ProductGridSection } from "@/components/home/product-grid-section";
+import { useEffect, useState } from "react";
+import { getProducts } from "@/lib/shopify/products";
+import type { Product } from "@/types/product";
+import { ProductRecommendations } from "@/components/product/product-recommendations";
 
 export default function SearchPage() {
   const router = useRouter();
@@ -18,13 +19,13 @@ export default function SearchPage() {
     async function loadProducts() {
       try {
         const [featured, newest] = await Promise.all([
-          getProducts({ sortKey: 'BEST_SELLING', first: 8 }),
-          getProducts({ sortKey: 'CREATED_AT', reverse: true, first: 8 })
+          getProducts({ sortKey: "BEST_SELLING", first: 8 }),
+          getProducts({ sortKey: "CREATED_AT", reverse: true, first: 8 }),
         ]);
         setFeaturedProducts(featured);
         setNewArrivals(newest);
       } catch (error) {
-        console.error('Error loading products:', error);
+        console.error("Error loading products:", error);
       }
     }
 
@@ -53,16 +54,19 @@ export default function SearchPage() {
       {/* Product Feeds */}
       <div className="py-4 space-y-8">
         {featuredProducts.length > 0 && (
-          <ProductGridSection 
-            title="Featured Products" 
-            products={featuredProducts}
-            className="py-0"
-          />
+          <section>
+            <h2 className="text-2xl font-bold mb-6">Featured Products</h2>
+            <ProductRecommendations
+              productId={featuredProducts[0]?.id}
+              type="featured"
+              count={10}
+            />
+          </section>
         )}
-        
+
         {newArrivals.length > 0 && (
-          <ProductGridSection 
-            title="New Arrivals" 
+          <ProductGridSection
+            title="New Arrivals"
             products={newArrivals}
             className="py-0"
           />
