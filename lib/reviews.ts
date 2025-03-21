@@ -1,5 +1,6 @@
 export const STAMPED_CONFIG = {
   apiKey: 'pubkey-4R57319D5548L8eyo3k03s5CiWb08O',
+  publicKey: 'apiKey',
   storeHash: '151250',
   apiUrl: 'https://stamped.io/api',
 } as const;
