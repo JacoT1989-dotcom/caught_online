@@ -94,6 +94,9 @@ export function ProductDetails({ product }: ProductDetailsProps) {
   const { selectedRegion } = useRegion();
   const { loading, isAvailable, quantity, checkProductInventory } =
     useInventory();
+    
+  // Add state for active image
+  const [activeImageUrl, setActiveImageUrl] = useState<string>(product.featuredImage.url);
 
   // Call useEffect unconditionally
   useEffect(() => {
@@ -101,6 +104,11 @@ export function ProductDetails({ product }: ProductDetailsProps) {
       checkProductInventory(product.handle);
     }
   }, [selectedRegion, product.handle, checkProductInventory]);
+
+  // Reset active image when product changes
+  useEffect(() => {
+    setActiveImageUrl(product.featuredImage.url);
+  }, [product.featuredImage.url]);
 
   // Extract data and computed values
   const mainVariant = product.variants?.edges[0]?.node;
@@ -131,6 +139,20 @@ export function ProductDetails({ product }: ProductDetailsProps) {
     : 0;
   const finalPrice = regularPrice * (1 - discount);
   const hasAdditionalImages = !!product.images?.edges?.length;
+
+  // Create a proper array of unique images for the gallery
+  const allImages = [
+    {
+      url: product.featuredImage.url,
+      altText: product.featuredImage.altText || product.title
+    },
+    ...(product.images?.edges
+      .filter(edge => edge.node.url !== product.featuredImage.url) // Filter out duplicates of featured image
+      .map(edge => ({
+        url: edge.node.url,
+        altText: edge.node.altText || product.title
+      })) || [])
+  ];
 
   const handleAddToCart = () => {
     if (!selectedRegion) {
@@ -172,7 +194,7 @@ export function ProductDetails({ product }: ProductDetailsProps) {
         <div className="space-y-4">
           <div className="relative aspect-square">
             <img
-              src={product.featuredImage.url}
+              src={activeImageUrl}
               alt={product.featuredImage.altText || product.title}
               className="w-full h-full object-cover rounded-lg"
             />
@@ -187,16 +209,25 @@ export function ProductDetails({ product }: ProductDetailsProps) {
               </Badge>
             )}
           </div>
-          {hasAdditionalImages && (
-            <div className="grid grid-cols-4 gap-2">
-              {product.images?.edges.map((image, i) => (
-                <div key={i} className="relative aspect-square">
+          {allImages.length > 1 && (
+            <div className="grid grid-cols-5 gap-2">
+              {allImages.map((image, i) => (
+                <button
+                  key={i}
+                  className={`relative aspect-square overflow-hidden rounded-lg border-2 transition-all ${
+                    activeImageUrl === image.url 
+                      ? "border-[#f6424a]" 
+                      : "border-transparent hover:border-gray-300"
+                  }`}
+                  onClick={() => setActiveImageUrl(image.url)}
+                  aria-label={`View ${image.altText || `image ${i + 1}`}`}
+                >
                   <img
-                    src={image.node.url}
-                    alt={image.node.altText || `${product.title} ${i + 1}`}
-                    className="w-full h-full object-cover rounded-lg"
+                    src={image.url}
+                    alt={image.altText || `${product.title} ${i + 1}`}
+                    className="w-full h-full object-cover"
                   />
-                </div>
+                </button>
               ))}
             </div>
           )}
