@@ -1,9 +1,10 @@
-export type SortOption = 'featured' | 'price-asc' | 'price-desc';
+export type SortOption = "featured" | "price-asc" | "price-desc";
 
 export interface FilterState {
-  type: string[];
+  fish: string[];
+  shellfish: string[];
   preparation: string[];
-  origin: string[];
+  source: string[];
 }
 
 export interface FilterOption {

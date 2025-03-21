@@ -9,11 +9,19 @@ export function filterProducts(
   const hasActiveFilters = Object.values(filters).some(
     (values) => values.length > 0
   );
+
   if (!hasActiveFilters) return products;
 
   return products.filter((product) => {
-    // Get product tags and type for matching
+    // Get product tags, collections, and type for matching
     const tags = product.tags?.map((tag) => tag.toLowerCase()) || [];
+
+    // Get collection handles from product
+    const collections =
+      product.collections?.edges?.map((edge) =>
+        edge.node.handle?.toLowerCase()
+      ) || [];
+
     const type = product.productType?.toLowerCase() || "";
 
     // Check each filter category
@@ -24,7 +32,23 @@ export function filterProducts(
       // Check if product matches any value in the category
       return values.some((value: string) => {
         const searchValue = value.toLowerCase();
-        return tags.includes(searchValue) || type.includes(searchValue);
+
+        // Check in tags
+        if (tags.includes(searchValue)) {
+          return true;
+        }
+
+        // Check in collections
+        if (collections.includes(searchValue)) {
+          return true;
+        }
+
+        // Check in product type
+        if (type.includes(searchValue)) {
+          return true;
+        }
+
+        return false;
       });
     });
   });

@@ -13,9 +13,10 @@ interface ShopFiltersStore {
 }
 
 const initialState: FilterState = {
-  type: [],
+  fish: [],
+  shellfish: [],
   preparation: [],
-  origin: [],
+  source: [],
 };
 
 export const useShopFilters = create<ShopFiltersStore>()(

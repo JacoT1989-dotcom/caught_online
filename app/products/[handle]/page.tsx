@@ -5,7 +5,7 @@ import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { ProductErrorBoundary } from "@/components/error-boundary/product-error-boundary";
 import { getProduct } from "@/lib/shopify/products";
 import { collections, getCollectionByHandle } from "@/lib/collections";
-import ProductReviews from '@/components/reviews/product-reviews';
+import ProductReviews from "@/components/reviews/product-reviews";
 
 interface ProductPageProps {
   params: {
@@ -40,7 +40,9 @@ export default async function ProductPage({
     notFound();
   }
   // Build breadcrumb items based on navigation context
-  const breadcrumbItems: BreadcrumbItem[] = [{ label: "Products", href: "/products" }];
+  const breadcrumbItems: BreadcrumbItem[] = [
+    { label: "Products", href: "/products" },
+  ];
   // Determine collection context
   let collectionHandle = searchParams.collection;
   // If no collection in URL, try to find product's primary collection
@@ -74,14 +76,14 @@ export default async function ProductPage({
       }
     }
   }
-  
+
   // Add product to breadcrumbs
   breadcrumbItems.push({
     label: product.title,
     href: `/products/${params.handle}`,
-    current: true
+    current: true,
   });
-  
+
   return (
     <div className="px-4 md:px-8 py-2">
       <div className="max-w-[1440px] mx-auto">
@@ -90,9 +92,12 @@ export default async function ProductPage({
         </div>
         <ProductErrorBoundary>
           <ProductDetails product={product} />
-          
+
           <div className="mt-16">
-            <ProductReviews productId={product.id} productName={product.title} />
+            <ProductReviews
+              productId={product.id}
+              productName={product.title}
+            />
           </div>
         </ProductErrorBoundary>
       </div>

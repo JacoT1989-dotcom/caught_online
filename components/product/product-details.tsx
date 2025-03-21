@@ -94,9 +94,11 @@ export function ProductDetails({ product }: ProductDetailsProps) {
   const { selectedRegion } = useRegion();
   const { loading, isAvailable, quantity, checkProductInventory } =
     useInventory();
-    
+
   // Add state for active image
-  const [activeImageUrl, setActiveImageUrl] = useState<string>(product.featuredImage.url);
+  const [activeImageUrl, setActiveImageUrl] = useState<string>(
+    product.featuredImage.url
+  );
 
   // Call useEffect unconditionally
   useEffect(() => {
@@ -144,14 +146,14 @@ export function ProductDetails({ product }: ProductDetailsProps) {
   const allImages = [
     {
       url: product.featuredImage.url,
-      altText: product.featuredImage.altText || product.title
+      altText: product.featuredImage.altText || product.title,
     },
     ...(product.images?.edges
-      .filter(edge => edge.node.url !== product.featuredImage.url) // Filter out duplicates of featured image
-      .map(edge => ({
+      .filter((edge) => edge.node.url !== product.featuredImage.url) // Filter out duplicates of featured image
+      .map((edge) => ({
         url: edge.node.url,
-        altText: edge.node.altText || product.title
-      })) || [])
+        altText: edge.node.altText || product.title,
+      })) || []),
   ];
 
   const handleAddToCart = () => {
@@ -215,8 +217,8 @@ export function ProductDetails({ product }: ProductDetailsProps) {
                 <button
                   key={i}
                   className={`relative aspect-square overflow-hidden rounded-lg border-2 transition-all ${
-                    activeImageUrl === image.url 
-                      ? "border-[#f6424a]" 
+                    activeImageUrl === image.url
+                      ? "border-[#f6424a]"
                       : "border-transparent hover:border-gray-300"
                   }`}
                   onClick={() => setActiveImageUrl(image.url)}

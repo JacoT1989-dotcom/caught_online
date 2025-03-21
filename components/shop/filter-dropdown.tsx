@@ -1,25 +1,32 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Filter } from 'lucide-react';
-import { FilterGroups } from './filters/filter-groups';
-import { useShopFilters } from '@/hooks/use-shop-filters';
-import { Badge } from '@/components/ui/badge';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Filter } from "lucide-react";
+import { FilterGroups } from "./filters/filter-groups";
+import { useShopFilters } from "@/hooks/use-shop-filters";
+import { Badge } from "@/components/ui/badge";
 
 export function FilterDropdown() {
   const [open, setOpen] = useState(false);
   const { filters } = useShopFilters();
-  
+
   // Count active filters
-  const activeFilterCount = Object.values(filters)
-    .reduce((count, values) => count + values.length, 0);
+  const activeFilterCount = Object.values(filters).reduce(
+    (count, values) => count + values.length,
+    0
+  );
 
   return (
     <>
-      <Button 
-        variant="outline" 
+      <Button
+        variant="outline"
         className="w-[110px] gap-1.5"
         size="default"
         onClick={() => setOpen(true)}
