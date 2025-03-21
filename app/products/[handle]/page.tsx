@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { Container } from "@/components/ui/container";
 import { ProductDetails } from "@/components/product/product-details";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { ProductErrorBoundary } from "@/components/error-boundary/product-error-boundary";
