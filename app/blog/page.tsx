@@ -12,29 +12,53 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import type { BlogPost } from "@/types/blog";
+import { SearchBar } from "@/components/blog/search-bar";
 
 // Add this export to tell Next.js this is a dynamic route
 export const dynamic = "force-dynamic";
 
+interface BlogPageProps {
+  searchParams: { 
+    page?: string;
+    q?: string;
+  };
+}
+
 export default async function BlogPage({
   searchParams,
-}: {
-  searchParams: { page?: string };
-}) {
-  // Get the current page from the URL query parameters, default to 1
+}: BlogPageProps) {
+  // Get search query and current page from URL parameters
+  const searchQuery = searchParams.q?.toLowerCase() || "";
   const currentPage = Number(searchParams.page) || 1;
   const postsPerPage = 9; // 3x3 grid
 
   // Add debug logging
   console.log("Fetching blog posts from Contentful...");
   console.log("Current page:", currentPage);
+  console.log("Search query:", searchQuery);
   
   // Get all posts
   const allPosts = await getBlogPosts();
   console.log("Fetched posts:", allPosts);
   
+  // Filter posts by search query if provided
+  const filteredPosts = searchQuery
+    ? allPosts.filter((post: BlogPost) => {
+        const titleMatch = post.title?.toLowerCase().includes(searchQuery);
+        const excerptMatch = post.excerpt?.toLowerCase().includes(searchQuery);
+        const authorMatch = post.author?.name?.toLowerCase().includes(searchQuery);
+        const tagMatch = post.tags?.some(tag => 
+          tag.toLowerCase().includes(searchQuery)
+        );
+        const blogMatch = post.blog?.toLowerCase().includes(searchQuery);
+        
+        return titleMatch || excerptMatch || authorMatch || tagMatch || blogMatch;
+      })
+    : allPosts;
+  
   // Calculate pagination
-  const totalPosts = allPosts.length;
+  const totalPosts = filteredPosts.length;
   const totalPages = Math.ceil(totalPosts / postsPerPage);
   
   // Make sure currentPage is within valid range
@@ -43,7 +67,7 @@ export default async function BlogPage({
   // Slice the posts array to get the posts for the current page
   const startIndex = (validatedPage - 1) * postsPerPage;
   const endIndex = startIndex + postsPerPage;
-  const paginatedPosts = allPosts.slice(startIndex, endIndex);
+  const paginatedPosts = filteredPosts.slice(startIndex, endIndex);
   
   console.log(`Showing posts ${startIndex + 1}-${Math.min(endIndex, totalPosts)} of ${totalPosts}`);
 
@@ -105,6 +129,16 @@ export default async function BlogPage({
   
   const paginationItems = generatePaginationItems();
 
+  // Function to generate page URLs while preserving search query
+  const getPageUrl = (pageNum: number) => {
+    const params = new URLSearchParams();
+    params.set("page", pageNum.toString());
+    if (searchQuery) {
+      params.set("q", searchQuery);
+    }
+    return `/blog?${params.toString()}`;
+  };
+
   return (
     <Container>
       <div className="py-8 space-y-8">
@@ -114,6 +148,24 @@ export default async function BlogPage({
             Latest news, recipes, and updates from Caught Online
           </p>
         </div>
+
+        {/* Search component - Improved centering */}
+        <div className="flex justify-center w-full">
+          <div className="w-full max-w-md mx-auto px-4">
+            <SearchBar initialQuery={searchQuery} />
+          </div>
+        </div>
+
+        {/* Search results info */}
+        {searchQuery && (
+          <div className="text-center">
+            <p className="text-muted-foreground">
+              {totalPosts === 0 
+                ? `No results found for "${searchQuery}"`
+                : `Found ${totalPosts} ${totalPosts === 1 ? 'result' : 'results'} for "${searchQuery}"`}
+            </p>
+          </div>
+        )}
 
         <Suspense
           fallback={
@@ -133,7 +185,7 @@ export default async function BlogPage({
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious 
-                    href={validatedPage > 1 ? `/blog?page=${validatedPage - 1}` : undefined}
+                    href={validatedPage > 1 ? getPageUrl(validatedPage - 1) : undefined}
                     className={validatedPage <= 1 ? "pointer-events-none opacity-50" : ""}
                   />
                 </PaginationItem>
@@ -151,7 +203,7 @@ export default async function BlogPage({
                   return (
                     <PaginationItem key={pageNumber}>
                       <PaginationLink 
-                        href={`/blog?page=${pageNumber}`}
+                        href={getPageUrl(pageNumber)}
                         isActive={pageNumber === validatedPage}
                       >
                         {pageNumber}
@@ -162,7 +214,7 @@ export default async function BlogPage({
                 
                 <PaginationItem>
                   <PaginationNext 
-                    href={validatedPage < totalPages ? `/blog?page=${validatedPage + 1}` : undefined}
+                    href={validatedPage < totalPages ? getPageUrl(validatedPage + 1) : undefined}
                     className={validatedPage >= totalPages ? "pointer-events-none opacity-50" : ""}
                   />
                 </PaginationItem>
