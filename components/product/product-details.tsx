@@ -14,12 +14,27 @@ import { ProductReviews } from "@/components/product/product-reviews";
 import { ProductRecommendations } from "@/components/product/product-recommendations";
 import { ProductRecipes } from "@/components/product/product-recipes";
 import { CartQuantity } from "@/components/cart/cart-quantity";
-import { CalendarRange, Fish, Leaf, ShieldCheck } from "lucide-react";
+import {
+  CalendarRange,
+  Fish,
+  Leaf,
+  ShieldCheck,
+  Minus,
+  Plus,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SUBSCRIPTION_PLANS } from "@/lib/types/subscription";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { SubscriptionInterval } from "@/lib/types/subscription";
 import { DeliverySection } from "@/components/product/delivery/delivery-section";
 import { trackAddToCart } from "@/lib/analytics";
+import { toast } from "sonner";
 
 const infoSections = [
   {
@@ -41,6 +56,12 @@ const infoSections = [
   },
 ];
 
+interface SubscriptionVariantIds {
+  monthly: string;
+  bimonthly: string;
+  quarterly: string;
+}
+
 interface ProductDetailsProps {
   product: {
     id: string;
@@ -57,6 +78,7 @@ interface ProductDetailsProps {
       edges: Array<{
         node: {
           id: string;
+          title: string; // Added title field for variant nodes
           price: {
             amount: string;
             currencyCode: string;
@@ -88,6 +110,7 @@ export function ProductDetails({ product }: ProductDetailsProps) {
   const [purchaseType, setPurchaseType] = useState<"onetime" | "subscription">(
     "onetime"
   );
+
   const [subscriptionInterval, setSubscriptionInterval] =
     useState<SubscriptionInterval>("monthly");
   const { items, addItem } = useCart();
@@ -99,6 +122,10 @@ export function ProductDetails({ product }: ProductDetailsProps) {
   const [activeImageUrl, setActiveImageUrl] = useState<string>(
     product.featuredImage.url
   );
+
+  // Add state for selected variant and quantity
+  const [selectedWeight, setSelectedWeight] = useState<string>("");
+  const [localQuantity, setLocalQuantity] = useState<number>(1);
 
   // Call useEffect unconditionally
   useEffect(() => {
@@ -115,7 +142,21 @@ export function ProductDetails({ product }: ProductDetailsProps) {
   // Extract data and computed values
   const mainVariant = product.variants?.edges[0]?.node;
   const price = mainVariant?.price || product.priceRange?.minVariantPrice;
-  const variantId = mainVariant?.id || product.id;
+
+  // Extract weight variants if they exist
+  const weightVariants = getWeightVariants(product);
+  const hasWeightVariants = weightVariants.length > 0;
+
+  // Set initial weight if variants exist
+  useEffect(() => {
+    if (hasWeightVariants && !selectedWeight && weightVariants.length > 0) {
+      setSelectedWeight(weightVariants[0].weight);
+    }
+  }, [hasWeightVariants, weightVariants, selectedWeight]);
+
+  // Get current variant ID based on selection
+  const currentVariantId = getVariantId(product, selectedWeight);
+  const variantId = currentVariantId || mainVariant?.id || product.id;
 
   // Handle missing price - this is now done after all hooks are called
   if (!price) {
@@ -127,7 +168,16 @@ export function ProductDetails({ product }: ProductDetailsProps) {
     );
   }
 
-  const regularPrice = parseFloat(price.amount);
+  // Get price for the currently selected weight variant
+  const getVariantPrice = () => {
+    if (hasWeightVariants && selectedWeight) {
+      const variant = weightVariants.find((v) => v.weight === selectedWeight);
+      return variant ? parseFloat(variant.price) : parseFloat(price.amount);
+    }
+    return parseFloat(price.amount);
+  };
+
+  const regularPrice = getVariantPrice();
   const cartItem = items.find((item) => item.id === product.id);
   const hasSubscriptionInCart = items.some((item) => item.subscription);
   const isSubscribed = cartItem?.subscription;
@@ -156,6 +206,50 @@ export function ProductDetails({ product }: ProductDetailsProps) {
       })) || []),
   ];
 
+  // Function to extract weight variants from product
+  function getWeightVariants(product: ProductDetailsProps["product"]) {
+    const variants = product.variants?.edges || [];
+    const weightVariants: { weight: string; price: string; id: string }[] = [];
+    const weightPattern = /(\d+g)/;
+
+    // Check if variants have weight in their titles
+    variants.forEach(({ node }) => {
+      // Check if node and node.title exist before trying to match
+      if (node && node.title) {
+        const match = node.title.match(weightPattern);
+        if (match) {
+          weightVariants.push({
+            weight: match[1],
+            price: node.price.amount,
+            id: node.id,
+          });
+        }
+      }
+    });
+
+    return weightVariants;
+  }
+
+  // Function to get variant ID based on selected weight
+  function getVariantId(
+    product: ProductDetailsProps["product"],
+    selectedWeight: string
+  ) {
+    if (!selectedWeight) return null;
+
+    const variants = product.variants?.edges || [];
+    const variant = variants.find(
+      ({ node }) => node?.title && node.title.includes(selectedWeight)
+    );
+
+    return variant ? variant.node.id : null;
+  }
+
+  // Function to handle quantity changes
+  const handleQuantityChange = (newQuantity: number) => {
+    setLocalQuantity(Math.max(1, newQuantity));
+  };
+
   const handleAddToCart = () => {
     if (!selectedRegion) {
       setShowRegionPrompt(true);
@@ -166,11 +260,11 @@ export function ProductDetails({ product }: ProductDetailsProps) {
       addItem({
         id: product.id,
         variantId: variantId,
-        title: product.title,
+        title: `${product.title}${selectedWeight ? ` - ${selectedWeight}` : ""}`,
         price: finalPrice,
         originalPrice: shouldShowSubscriptionPrice ? regularPrice : undefined,
         image: product.featuredImage.url,
-        quantity: 1,
+        quantity: localQuantity, // Use the local quantity state
         subscription: shouldShowSubscriptionPrice
           ? subscriptionInterval
           : undefined,
@@ -180,13 +274,146 @@ export function ProductDetails({ product }: ProductDetailsProps) {
         id: product.id,
         title: product.title,
         price: finalPrice,
-        variantId: product.id,
-        quantity: 1,
+        variantId: variantId,
+        quantity: localQuantity, // Use the local quantity state
+      });
+
+      toast.success(`${localQuantity}x ${product.title} added to cart`, {
+        duration: 2000,
       });
     } catch (error) {
       console.error("Error adding to cart:", error);
     }
   };
+
+  const baseProductId = product.id;
+
+  const getSubscriptionVariantIds = (
+    product: ProductDetailsProps["product"]
+  ) => {
+    console.log("Finding subscription variants for product:", product.title);
+
+    // Find variants with subscription options
+    const variants = product.variants?.edges || [];
+
+    // Get IDs for each subscription interval
+    const variantIds: SubscriptionVariantIds = {
+      monthly: "",
+      bimonthly: "",
+      quarterly: "",
+    };
+
+    // Log all variants to see what we're working with
+    console.log(
+      "All variants:",
+      variants.map((v) => ({
+        id: v.node.id,
+        title: v.node.title,
+        price: v.node.price?.amount,
+      }))
+    );
+
+    // Try to find variants based on their titles or options
+    variants.forEach(({ node }) => {
+      if (node.title) {
+        const title = node.title.toLowerCase();
+
+        // Use more flexible matching to catch variations in naming
+        if (
+          title.includes("month") &&
+          !title.includes("2") &&
+          !title.includes("3") &&
+          !title.includes("two") &&
+          !title.includes("three")
+        ) {
+          console.log(
+            "Found monthly variant:",
+            node.id,
+            "with price:",
+            node.price?.amount
+          );
+          variantIds.monthly = node.id;
+        } else if (
+          title.includes("2 month") ||
+          title.includes("every 2 month") ||
+          title.includes("bi") ||
+          title.includes("two month")
+        ) {
+          console.log(
+            "Found bimonthly variant:",
+            node.id,
+            "with price:",
+            node.price?.amount
+          );
+          variantIds.bimonthly = node.id;
+        } else if (
+          title.includes("3 month") ||
+          title.includes("every 3 month") ||
+          title.includes("quarter") ||
+          title.includes("three month")
+        ) {
+          console.log(
+            "Found quarterly variant:",
+            node.id,
+            "with price:",
+            node.price?.amount
+          );
+          variantIds.quarterly = node.id;
+        }
+      }
+    });
+
+    // If we still don't have all interval IDs, try matching by price
+    // This assumes different subscription intervals have different prices
+    if (!variantIds.monthly || !variantIds.bimonthly || !variantIds.quarterly) {
+      // Extract prices from the image to match with variants
+      const expectedPrices = {
+        monthly: "499.10", // From the image
+        bimonthly: "461.58", // From the image
+        quarterly: "474.05", // From the image
+      };
+
+      variants.forEach(({ node }) => {
+        const price = node.price?.amount;
+
+        if (price === expectedPrices.monthly && !variantIds.monthly) {
+          console.log("Found monthly variant by price:", node.id);
+          variantIds.monthly = node.id;
+        } else if (
+          price === expectedPrices.bimonthly &&
+          !variantIds.bimonthly
+        ) {
+          console.log("Found bimonthly variant by price:", node.id);
+          variantIds.bimonthly = node.id;
+        } else if (
+          price === expectedPrices.quarterly &&
+          !variantIds.quarterly
+        ) {
+          console.log("Found quarterly variant by price:", node.id);
+          variantIds.quarterly = node.id;
+        }
+      });
+    }
+
+    // Fallback to using the main variant ID if no subscription variants found
+    if (!variantIds.monthly && variants.length > 0) {
+      const defaultVariantId = variants[0].node.id;
+      console.log(
+        "No specific subscription variants found, using default variant:",
+        defaultVariantId
+      );
+
+      variantIds.monthly = defaultVariantId;
+      variantIds.bimonthly = defaultVariantId;
+      variantIds.quarterly = defaultVariantId;
+    }
+
+    console.log("Final subscription variant IDs:", variantIds);
+    return variantIds;
+  };
+
+  // Inside your component's render function
+  const subscriptionVariantIds = getSubscriptionVariantIds(product);
 
   return (
     <div className="space-y-16">
@@ -275,6 +502,25 @@ export function ProductDetails({ product }: ProductDetailsProps) {
             <p>{product.description}</p>
           </div>
 
+          {/* Weight Variants Selection */}
+          {hasWeightVariants && (
+            <div className="space-y-2">
+              <h3 className="font-medium">Weight</h3>
+              <Select value={selectedWeight} onValueChange={setSelectedWeight}>
+                <SelectTrigger className="w-full max-w-[200px]">
+                  <SelectValue placeholder="Select weight" />
+                </SelectTrigger>
+                <SelectContent>
+                  {weightVariants.map((variant) => (
+                    <SelectItem key={variant.weight} value={variant.weight}>
+                      {variant.weight}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {cartItem ? (
             <div className="space-y-4">
               <CartQuantity
@@ -292,6 +538,10 @@ export function ProductDetails({ product }: ProductDetailsProps) {
               onSubscriptionIntervalChange={setSubscriptionInterval}
               onAddToCart={handleAddToCart}
               isAvailable={isAvailable}
+              productId={baseProductId} // Pass the base product ID
+              subscriptionVariantIds={subscriptionVariantIds} // Pass the variant IDs
+              quantity={localQuantity} // Pass the selected quantity
+              useSubscriptionFlow={true}
             />
           )}
         </div>

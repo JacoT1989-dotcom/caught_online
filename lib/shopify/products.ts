@@ -35,10 +35,11 @@ const GET_PRODUCTS_QUERY = `
               currencyCode
             }
           }
-          variants(first: 1) {
+          variants(first: 20) {  # Changed from 1 to 20 to get all variants
             edges {
               node {
                 id
+                title  # Added title field
                 availableForSale
                 price {
                   amount
@@ -47,6 +48,10 @@ const GET_PRODUCTS_QUERY = `
                 compareAtPrice {
                   amount
                   currencyCode
+                }
+                selectedOptions {  
+                  name
+                  value
                 }
                 quantityAvailable
               }
@@ -103,10 +108,12 @@ const GET_COLLECTION_PRODUCTS_QUERY = `
                 currencyCode
               }
             }
-            variants(first: 1) {
+            variants(first: 20) {
+             variants
               edges {
                 node {
                   id
+                  title   
                   availableForSale
                   price {
                     amount
@@ -115,6 +122,10 @@ const GET_COLLECTION_PRODUCTS_QUERY = `
                   compareAtPrice {
                     amount
                     currencyCode
+                  }
+                  selectedOptions {  # Added selectedOptions field
+                    name
+                    value
                   }
                   quantityAvailable
                 }
@@ -164,10 +175,11 @@ const GET_PRODUCT_BY_HANDLE = `
           currencyCode
         }
       }
-      variants(first: 1) {
+      variants(first: 20) {  # Changed from 1 to 20 to get all variants
         edges {
           node {
             id
+            title  # Added title field
             availableForSale
             price {
               amount
@@ -176,6 +188,10 @@ const GET_PRODUCT_BY_HANDLE = `
             compareAtPrice {
               amount
               currencyCode
+            }
+            selectedOptions {  # Added selectedOptions field
+              name
+              value
             }
             quantityAvailable
           }
@@ -370,10 +386,11 @@ const GET_PRODUCT_RECOMMENDATIONS_QUERY = `
           currencyCode
         }
       }
-      variants(first: 1) {
+      variants(first: 20) {  
         edges {
           node {
             id
+            title  
             availableForSale
             price {
               amount
@@ -382,6 +399,10 @@ const GET_PRODUCT_RECOMMENDATIONS_QUERY = `
             compareAtPrice {
               amount
               currencyCode
+            }
+            selectedOptions {   
+              name
+              value
             }
             quantityAvailable
           }
@@ -413,10 +434,12 @@ const GET_PRODUCTS_BY_TYPE_QUERY = `
               currencyCode
             }
           }
-          variants(first: 1) {
+          variants(first: 20) {
+          variants
             edges {
               node {
                 id
+                title  # Added title field
                 availableForSale
                 price {
                   amount
@@ -425,6 +448,10 @@ const GET_PRODUCTS_BY_TYPE_QUERY = `
                 compareAtPrice {
                   amount
                   currencyCode
+                }
+                selectedOptions {  
+                  name
+                  value
                 }
                 quantityAvailable
               }

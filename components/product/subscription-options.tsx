@@ -9,6 +9,14 @@ import type { SubscriptionInterval } from "@/lib/types/subscription";
 import { cn } from "@/lib/utils";
 import { Percent, Plus, ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { handleSubscriptionFlow } from "../subscriptionflow/handler";
+
+// Define a type for subscription variant IDs by interval
+interface SubscriptionVariantIds {
+  monthly: string;
+  bimonthly: string;
+  quarterly: string;
+}
 
 interface SubscriptionOptionsProps {
   price: number;
@@ -18,6 +26,10 @@ interface SubscriptionOptionsProps {
   onSubscriptionIntervalChange: (value: SubscriptionInterval) => void;
   onAddToCart: () => void;
   isAvailable?: boolean;
+  productId: string; // The base product ID (not variant ID)
+  subscriptionVariantIds: SubscriptionVariantIds; // Variant IDs for subscription options
+  quantity?: number;
+  useSubscriptionFlow?: boolean;
 }
 
 export function SubscriptionOptions({
@@ -28,10 +40,61 @@ export function SubscriptionOptions({
   onSubscriptionIntervalChange,
   onAddToCart,
   isAvailable = true,
+  productId,
+  subscriptionVariantIds,
+  quantity = 1,
+  useSubscriptionFlow = true,
 }: SubscriptionOptionsProps) {
   const [showAllOptions, setShowAllOptions] = useState(false);
   const selectedOption = SUBSCRIPTION_PLANS[subscriptionInterval];
   const discountedPrice = price * (1 - (selectedOption?.discount || 0));
+
+  // Handle the Add to Cart button click
+  const handleAddToCart = () => {
+    onPurchaseTypeChange("onetime");
+    onAddToCart();
+  };
+
+  // Inside the SubscriptionOptions component
+
+  // Handle the Subscribe Now button click
+  const handleSubscribeNow = () => {
+    // Debug logs
+    console.log("Subscribe Now clicked");
+    console.log("Purchase type:", purchaseType);
+    console.log("Subscription interval:", subscriptionInterval);
+    console.log("Product ID:", productId);
+    console.log("Subscription variant IDs:", subscriptionVariantIds);
+    console.log(
+      "Selected variant ID:",
+      subscriptionVariantIds[subscriptionInterval]
+    );
+
+    onPurchaseTypeChange("subscription");
+
+    if (useSubscriptionFlow) {
+      // Ensure we're using the correct variant ID for the selected interval
+      const currentVariantId = subscriptionVariantIds[subscriptionInterval];
+
+      if (!currentVariantId) {
+        console.error(
+          `No variant ID found for interval: ${subscriptionInterval}`
+        );
+        return;
+      }
+
+      // Use subscription flow for checkout with the product-specific variant IDs
+      handleSubscriptionFlow({
+        productId,
+        subscriptionVariantIds,
+        selectedInterval: subscriptionInterval,
+        quantity,
+      });
+    } else {
+      // Use your existing cart functionality
+      onAddToCart();
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -72,10 +135,7 @@ export function SubscriptionOptions({
 
         {/* Add to Cart Button */}
         <Button
-          onClick={() => {
-            onPurchaseTypeChange("onetime");
-            onAddToCart();
-          }}
+          onClick={handleAddToCart}
           className="w-full gap-2 bg-[#f6424a] hover:bg-[#f6424a]/90 mt-3 h-11"
           disabled={!isAvailable}
         >
@@ -280,10 +340,7 @@ export function SubscriptionOptions({
 
           {/* Subscribe Now Button */}
           <Button
-            onClick={() => {
-              onPurchaseTypeChange("subscription");
-              onAddToCart();
-            }}
+            onClick={handleSubscribeNow}
             className="w-full gap-2 bg-[#f6424a] hover:bg-[#f6424a]/90 h-11"
             disabled={!isAvailable}
           >
