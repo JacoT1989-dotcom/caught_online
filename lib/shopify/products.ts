@@ -109,7 +109,7 @@ const GET_COLLECTION_PRODUCTS_QUERY = `
               }
             }
             variants(first: 20) {
-             variants
+           
               edges {
                 node {
                   id
