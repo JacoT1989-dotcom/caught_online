@@ -1,29 +1,31 @@
-'use client';
+"use client";
 
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { ChevronRight } from 'lucide-react';
-import { collections, getCollectionByHandle } from '@/lib/collections';
-import Link from 'next/link';
-import { cn } from '@/lib/utils';
+import { useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { ChevronRight } from "lucide-react";
+import { collections, getCollectionByHandle } from "@/lib/collections";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 interface CollectionHeaderProps {
   collection?: string;
 }
 
 export function CollectionHeader({ collection }: CollectionHeaderProps) {
-  const currentCollection = collection ? getCollectionByHandle(collection) : undefined;
-  
+  const currentCollection = collection
+    ? getCollectionByHandle(collection)
+    : undefined;
+
   // Find parent collection if this is a subcollection
-  const parentCollection = collections.find(col => 
-    col.subcollections?.some(sub => sub.handle === collection)
+  const parentCollection = collections.find((col) =>
+    col.subcollections?.some((sub) => sub.handle === collection)
   );
 
   // Determine which collection to show subcategories for
   const collectionWithSubs = parentCollection || currentCollection;
-  const isMainCategory = collections.some(col => col.handle === collection);
+  const isMainCategory = collections.some((col) => col.handle === collection);
   const isSubcategory = !isMainCategory && collection;
-  
+
   return (
     <div className="space-y-4 mb-4 mt-3">
       {/* Breadcrumbs - Always visible */}
@@ -36,7 +38,7 @@ export function CollectionHeader({ collection }: CollectionHeaderProps) {
             <ChevronRight className="h-4 w-4" />
             {parentCollection && (
               <>
-                <Link 
+                <Link
                   href={`/products?collection=${parentCollection.handle}`}
                   className="hover:text-[#f6424a]"
                 >
@@ -45,9 +47,7 @@ export function CollectionHeader({ collection }: CollectionHeaderProps) {
                 <ChevronRight className="h-4 w-4" />
               </>
             )}
-            <span className="font-medium">
-              {currentCollection.title}
-            </span>
+            <span className="font-medium">{currentCollection.title}</span>
           </>
         )}
       </div>
@@ -61,11 +61,9 @@ export function CollectionHeader({ collection }: CollectionHeaderProps) {
           className="rounded-full"
           asChild
         >
-          <Link href="/products">
-            All Products
-          </Link>
+          <Link href="/products">All Products</Link>
         </Button>
-        
+
         {/* Show main categories */}
         {collections.map((col) => (
           <Button
@@ -75,9 +73,7 @@ export function CollectionHeader({ collection }: CollectionHeaderProps) {
             className="rounded-full"
             asChild
           >
-            <Link href={`/products?collection=${col.handle}`}>
-              {col.title}
-            </Link>
+            <Link href={`/products?collection=${col.handle}`}>{col.title}</Link>
           </Button>
         ))}
 
@@ -90,9 +86,7 @@ export function CollectionHeader({ collection }: CollectionHeaderProps) {
             className="rounded-full"
             asChild
           >
-            <Link href={`/products?collection=${sub.handle}`}>
-              {sub.title}
-            </Link>
+            <Link href={`/products?collection=${sub.handle}`}>{sub.title}</Link>
           </Button>
         ))}
       </div>
