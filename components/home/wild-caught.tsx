@@ -165,7 +165,7 @@ export function WildCaught() {
                     </div>
 
                     {/* Desktop Layout - Hidden on mobile */}
-                    <div className="hidden lg:grid lg:grid-cols-2 gap-8">
+                    <div className="hidden lg:grid lg:grid-cols-2 gap-8  max-h-[500px]">
                       <div className="p-12 flex flex-col justify-center">
                         <div className="space-y-6 max-w-xl">
                           <div className="flex items-center gap-2">
@@ -193,7 +193,7 @@ export function WildCaught() {
                         </div>
                       </div>
 
-                      <div className="relative h-[750px]">
+                      <div className="relative h-[500px]">
                         <video
                           autoPlay
                           loop
