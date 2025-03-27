@@ -45,8 +45,8 @@ export const categories = [
   {
     title: "Crumbed & Coated",
     description: "Ready to cook favorites",
-    collection: "crumbed-coated",
-    href: "/products?collection=crumbed-coated",
+    collection: "crumbed-coated-seafood",
+    href: "/products?collections/crumbed-coated-seafood",
   },
 ] as const;
 
