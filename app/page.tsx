@@ -1,4 +1,3 @@
-// app/page.tsx
 import { Suspense } from "react";
 import { Hero } from "@/components/home/hero";
 import { ProductCategories } from "@/components/home/product-categories";
@@ -38,7 +37,11 @@ export default async function HomePage() {
 
       <Hero />
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <Testimonials />
+        <Suspense
+          fallback={<div className="h-[40vh] bg-muted animate-pulse" />}
+        >
+          <Testimonials />
+        </Suspense>
         <ProductCategories />
         <Suspense
           fallback={<div className="h-96 animate-pulse bg-muted rounded-lg" />}
