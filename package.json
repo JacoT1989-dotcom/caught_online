@@ -56,7 +56,6 @@
     "cmdk": "^1.0.4",
     "contentful": "^11.5.3",
     "date-fns": "^3.3.1",
-    "date-picker": "^0.5.0",
     "embla-carousel-react": "^8.0.0",
     "framer-motion": "^11.0.8",
     "input-otp": "^1.4.2",

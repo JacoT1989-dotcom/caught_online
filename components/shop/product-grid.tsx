@@ -65,7 +65,7 @@ export function ProductGrid({
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(8); // Number of items per page
+  const [itemsPerPage] = useState(12); // Number of items per page
 
   // First filter by search query
   const searchFilteredProducts = useMemo(() => {
@@ -108,7 +108,10 @@ export function ProductGrid({
   // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentProducts = sortedProducts.slice(indexOfFirstItem, indexOfLastItem);
+  const currentProducts = sortedProducts.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
 
   const totalPages = Math.ceil(sortedProducts.length / itemsPerPage);
 
