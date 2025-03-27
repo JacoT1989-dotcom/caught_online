@@ -5,6 +5,8 @@ import { ProductErrorBoundary } from "@/components/error-boundary/product-error-
 import { getProduct } from "@/lib/shopify/products";
 import { collections, getCollectionByHandle } from "@/lib/collections";
 import ProductReviews from "@/components/reviews/product-reviews";
+// import StampedReviews from "@/components/reviews/StampedReviews";
+
 
 interface ProductPageProps {
   params: {
@@ -82,6 +84,9 @@ export default async function ProductPage({
     href: `/products/${params.handle}`,
     current: true,
   });
+  
+  // Prepare the product URL for Stamped.io
+  const productUrl = `${process.env.NEXT_PUBLIC_STORE_URL || 'https://caught-online.myshopify.com'}/products/${params.handle}`;
 
   return (
     <div className="px-4 md:px-8 py-2">
@@ -93,10 +98,23 @@ export default async function ProductPage({
           <ProductDetails product={product} />
 
           <div className="mt-16">
-            <ProductReviews
+            {/* <StampedReviews 
               productId={product.id}
-              productName={product.title}
+              productTitle={product.title}
+              productUrl={productUrl}
             />
+             */}
+             <div className="mt-16">
+  {/* <StampedReviews 
+    productId={product.id}
+    productTitle={product.title}
+    productUrl={productUrl}
+  /> */}
+  <ProductReviews 
+    productId={product.id} 
+    productName={product.title} 
+  />
+</div>
           </div>
         </ProductErrorBoundary>
       </div>
