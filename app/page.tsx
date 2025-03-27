@@ -1,4 +1,3 @@
-// app/page.tsx
 import { Suspense } from "react";
 import { Hero } from "@/components/home/hero";
 import { ProductCategories } from "@/components/home/product-categories";
@@ -35,53 +34,60 @@ export default async function HomePage() {
   return (
     <main>
       <UserDataTracker />
+
       <Hero />
-      <Testimonials />
-      <ProductCategories />
-      <Suspense
-        fallback={<div className="h-96 animate-pulse bg-muted rounded-lg" />}
-      >
-        {featuredProducts.length > 0 ? (
-          <section>
-            <h2 className="text-2xl font-bold mb-6">Featured Products</h2>
-            <ProductRecommendations
-              productId={featuredProducts[0]?.id}
-              type="featured"
-              count={10}
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <Suspense
+          fallback={<div className="h-[40vh] bg-muted animate-pulse" />}
+        >
+          <Testimonials />
+        </Suspense>
+        <ProductCategories />
+        <Suspense
+          fallback={<div className="h-96 animate-pulse bg-muted rounded-lg" />}
+        >
+          {featuredProducts.length > 0 ? (
+            <section>
+              <h2 className="text-2xl font-bold mb-6">Featured Products</h2>
+              <ProductRecommendations
+                productId={featuredProducts[0]?.id}
+                type="featured"
+                count={10}
+              />
+            </section>
+          ) : (
+            <div className="container py-12">
+              <h2 className="text-2xl font-bold text-center">
+                Featured Products
+              </h2>
+              <p className="text-center mt-4">Loading products...</p>
+            </div>
+          )}
+        </Suspense>
+        <SubscriptionPlans />
+        <Suspense
+          fallback={<div className="h-96 animate-pulse bg-muted rounded-lg" />}
+        >
+          {newArrivals.length > 0 ? (
+            <ProductGridSection
+              title="Trending Subscriptions"
+              products={newArrivals}
+              subscriptionMode={true}
             />
-          </section>
-        ) : (
-          <div className="container py-12">
-            <h2 className="text-2xl font-bold text-center">
-              Featured Products
-            </h2>
-            <p className="text-center mt-4">Loading products...</p>
-          </div>
-        )}
-      </Suspense>
-      <SubscriptionPlans />
-      <Suspense
-        fallback={<div className="h-96 animate-pulse bg-muted rounded-lg" />}
-      >
-        {newArrivals.length > 0 ? (
-          <ProductGridSection
-            title="Trending Subscriptions"
-            products={newArrivals}
-            subscriptionMode={true}
-          />
-        ) : (
-          <div className="container py-12">
-            <h2 className="text-2xl font-bold text-center">
-              Trending Subscriptions
-            </h2>
-            <p className="text-center mt-4">Loading products...</p>
-          </div>
-        )}
-      </Suspense>
-      <WildCaught />
-      <Newsletter />
-      <DeliveryAreas />
-      <SustainabilityPreview />
+          ) : (
+            <div className="container py-12">
+              <h2 className="text-2xl font-bold text-center">
+                Trending Subscriptions
+              </h2>
+              <p className="text-center mt-4">Loading products...</p>
+            </div>
+          )}
+        </Suspense>
+        <WildCaught />
+        <Newsletter />
+        <DeliveryAreas />
+        <SustainabilityPreview />
+      </div>
     </main>
   );
 }

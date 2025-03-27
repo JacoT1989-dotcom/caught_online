@@ -16,15 +16,50 @@ import {
   CalendarRange,
   Loader2,
 } from "lucide-react";
-import { SubscriptionsList } from "@/components/subscriptions/subscriptions-list";
 import Image from "next/image";
-import { OrdersResponse } from "@/types/orders";
+import { ProfileEditor } from "@/components/account/profile-editor";
+import { AddressEditor } from "@/components/account/address-editor";
+
+// TypeScript interfaces
+interface OrderLineItem {
+  title: string;
+  quantity: number;
+  variant?: {
+    image?: {
+      url: string;
+      altText: string | null;
+    };
+    title?: string;
+  };
+}
+
+interface Order {
+  id: string;
+  orderNumber: number;
+  processedAt: string;
+  totalPriceV2: {
+    amount: string;
+    currencyCode: string;
+  };
+  fulfillmentStatus: string | null;
+  lineItems: {
+    edges: Array<{
+      node: OrderLineItem;
+    }>;
+  };
+}
+
+interface OrdersResponse {
+  edges: Array<{
+    node: Order;
+  }>;
+}
 
 export default function AccountPage() {
   const { isAuthenticated, user, logout, accessToken } = useAuth();
   const router = useRouter();
   const [orders, setOrders] = useState<OrdersResponse>({ edges: [] });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -53,12 +88,6 @@ export default function AccountPage() {
           }
 
           const data = await response.json();
-          console.log("Response from API:", data);
-          console.log("Orders from API:", data.customer?.orders);
-          console.log(
-            "Order count:",
-            data.customer?.orders?.edges?.length || 0
-          );
 
           if (data.customer?.orders) {
             setOrders(data.customer.orders);
@@ -190,63 +219,24 @@ export default function AccountPage() {
         </TabsContent>
 
         <TabsContent value="subscriptions">
-          <SubscriptionsList customerId={user.id} />
+          {/* Ensure your SubscriptionManager component is typed properly */}
+          <div className="text-center py-12">
+            <CalendarRange className="h-12 w-12 mx-auto text-muted-foreground" />
+            <h3 className="mt-4 text-lg font-medium">
+              Subscription Management
+            </h3>
+            <p className="text-muted-foreground">
+              Manage your active subscriptions here.
+            </p>
+          </div>
         </TabsContent>
 
         <TabsContent value="profile">
-          <Card className="p-6">
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-medium text-sm text-muted-foreground">
-                  Name
-                </h3>
-                <p>
-                  {user.firstName} {user.lastName}
-                </p>
-              </div>
-              <div>
-                <h3 className="font-medium text-sm text-muted-foreground">
-                  Email
-                </h3>
-                <p>{user.email}</p>
-              </div>
-              {user.phone && (
-                <div>
-                  <h3 className="font-medium text-sm text-muted-foreground">
-                    Phone
-                  </h3>
-                  <p>{user.phone}</p>
-                </div>
-              )}
-            </div>
-          </Card>
+          <ProfileEditor />
         </TabsContent>
 
         <TabsContent value="addresses">
-          <Card className="p-6">
-            {user.defaultAddress ? (
-              <div className="space-y-2">
-                <h3 className="font-medium">Default Address</h3>
-                <p>{user.defaultAddress.address1}</p>
-                {user.defaultAddress.address2 && (
-                  <p>{user.defaultAddress.address2}</p>
-                )}
-                <p>
-                  {user.defaultAddress.city}, {user.defaultAddress.province}{" "}
-                  {user.defaultAddress.zip}
-                </p>
-                <p>{user.defaultAddress.country}</p>
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <MapPin className="h-12 w-12 mx-auto text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-medium">No addresses saved</h3>
-                <p className="text-muted-foreground">
-                  Add an address for faster checkout.
-                </p>
-              </div>
-            )}
-          </Card>
+          <AddressEditor />
         </TabsContent>
       </Tabs>
     </div>

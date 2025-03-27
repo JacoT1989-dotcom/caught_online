@@ -90,7 +90,7 @@ export default async function ProductPage({
 
   return (
     <div className="px-4 md:px-8 py-2">
-      <div className="max-w-[1440px] mx-auto">
+      <div className="max-w-6xl mx-auto">
         <div className="mb-1">
           <Breadcrumbs items={breadcrumbItems} />
         </div>

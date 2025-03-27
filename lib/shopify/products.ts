@@ -435,7 +435,6 @@ const GET_PRODUCTS_BY_TYPE_QUERY = `
             }
           }
           variants(first: 20) {
-          variants
             edges {
               node {
                 id

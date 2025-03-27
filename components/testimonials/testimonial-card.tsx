@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Radio, Users, Play, Pause } from "lucide-react";
 import { MediaPlayer, MediaPlayerRef } from "./media-player";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface TestimonialCardProps {
   id: string;
@@ -28,16 +29,21 @@ export function TestimonialCard({
   backgroundImage,
 }: TestimonialCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
-  // Import the MediaPlayerRef from the same file to ensure type compatibility
+  const [isImageLoading, setIsImageLoading] = useState(!!backgroundImage);
   const mediaRef = useRef<MediaPlayerRef>(null);
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     if (isPlaying) {
       mediaRef.current?.pause();
     } else {
       mediaRef.current?.play();
     }
-  };
+  }, [isPlaying]);
+
+  //not sure about this
+  const formattedTitle = useMemo(() => {
+    return `${title} ${followers ? `- ${followers}` : ""}`;
+  }, [title, followers]);
 
   return (
     <div
@@ -67,15 +73,30 @@ export function TestimonialCard({
             />
           ) : (
             <>
+              {/* Show skeleton during background image loading */}
+              {isImageLoading && backgroundImage && (
+                <Skeleton className="absolute inset-0 w-full h-full z-10" />
+              )}
+
               {backgroundImage && (
                 <Image
                   src={backgroundImage}
                   alt={author}
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className={cn(
+                    "absolute inset-0 w-full h-full object-cover",
+                    isImageLoading ? "opacity-0" : "opacity-100",
+                    "transition-opacity duration-300"
+                  )}
                   width={640}
                   height={1138}
+                  onLoad={() => setIsImageLoading(false)}
+                  loading="lazy"
+                  sizes="(max-width: 768px) 100vw, 25vw"
+                  placeholder="blur"
+                  blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
                 />
               )}
+
               <MediaPlayer
                 ref={mediaRef}
                 id={id}
@@ -97,7 +118,7 @@ export function TestimonialCard({
               "h-20 w-20 rounded-full bg-white/10 backdrop-blur-sm",
               "hover:bg-white/20 transition-colors",
               "border border-white/20",
-              "flex items-center justify-center"
+              "flex items-center justify-center z-20"
             )}
           >
             {isPlaying ? (
@@ -108,7 +129,7 @@ export function TestimonialCard({
           </div>
 
           {/* Author Info */}
-          <div className="absolute bottom-4 left-4 right-4">
+          <div className="absolute bottom-4 left-4 right-4 z-10">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-semibold text-lg text-white">{author}</h3>

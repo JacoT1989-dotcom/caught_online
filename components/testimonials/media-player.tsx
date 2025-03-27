@@ -1,11 +1,19 @@
-'use client';
+"use client";
 
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
-import { useMediaPlayback } from '@/lib/hooks/use-media-playback';
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
+import { useMediaPlayback } from "@/lib/hooks/use-media-playback";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 interface MediaPlayerProps {
   id: string;
-  type: 'video' | 'audio';
+  type: "video" | "audio";
   src: string;
   onPlay: () => void;
   onPause: () => void;
@@ -18,80 +26,106 @@ export interface MediaPlayerRef {
   pause: () => void;
 }
 
-export const MediaPlayer = forwardRef<MediaPlayerRef, MediaPlayerProps>(({
-  id,
-  type,
-  src,
-  onPlay,
-  onPause,
-  onEnded,
-  className
-}, ref) => {
-  const mediaRef = useRef<HTMLVideoElement | HTMLAudioElement>(null);
-  const { currentlyPlaying, setCurrentlyPlaying } = useMediaPlayback();
+export const MediaPlayer = forwardRef<MediaPlayerRef, MediaPlayerProps>(
+  ({ id, type, src, onPlay, onPause, onEnded, className }, ref) => {
+    const [isLoading, setIsLoading] = useState(true);
+    const mediaRef = useRef<HTMLVideoElement | HTMLAudioElement>(null);
+    const { currentlyPlaying, setCurrentlyPlaying } = useMediaPlayback();
 
-  useImperativeHandle(ref, () => ({
-    play: () => mediaRef.current?.play(),
-    pause: () => mediaRef.current?.pause()
-  }));
+    useImperativeHandle(ref, () => ({
+      play: () => {
+        if (isLoading) return undefined;
+        return mediaRef.current?.play();
+      },
+      pause: () => mediaRef.current?.pause(),
+    }));
 
-  useEffect(() => {
-    const media = mediaRef.current;
-    if (!media) return;
+    // Force loading to complete after a timeout
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 2000);
 
-    const handlePlay = () => {
-      setCurrentlyPlaying(id);
-      onPlay();
-    };
+      return () => clearTimeout(timer);
+    }, [src]);
 
-    const handlePause = () => {
-      onPause();
-    };
+    useEffect(() => {
+      const media = mediaRef.current;
+      if (!media) return;
 
-    const handleEnded = () => {
-      setCurrentlyPlaying(null);
-      onEnded();
-    };
+      const handlePlay = () => {
+        setCurrentlyPlaying(id);
+        onPlay();
+      };
 
-    media.addEventListener('play', handlePlay);
-    media.addEventListener('pause', handlePause);
-    media.addEventListener('ended', handleEnded);
+      const handlePause = () => {
+        onPause();
+      };
 
-    return () => {
-      media.removeEventListener('play', handlePlay);
-      media.removeEventListener('pause', handlePause);
-      media.removeEventListener('ended', handleEnded);
-    };
-  }, [id, onPlay, onPause, onEnded, setCurrentlyPlaying]);
+      const handleEnded = () => {
+        setCurrentlyPlaying(null);
+        onEnded();
+      };
 
-  // Pause this media if another one starts playing
-  useEffect(() => {
-    const media = mediaRef.current;
-    if (!media) return;
+      const handleCanPlay = () => {
+        setIsLoading(false);
+      };
 
-    if (currentlyPlaying && currentlyPlaying !== id && !media.paused) {
-      media.pause();
+      const handleLoadStart = () => {
+        setIsLoading(true);
+      };
+
+      media.addEventListener("play", handlePlay);
+      media.addEventListener("pause", handlePause);
+      media.addEventListener("ended", handleEnded);
+      media.addEventListener("canplay", handleCanPlay);
+      media.addEventListener("loadstart", handleLoadStart);
+
+      return () => {
+        media.removeEventListener("play", handlePlay);
+        media.removeEventListener("pause", handlePause);
+        media.removeEventListener("ended", handleEnded);
+        media.removeEventListener("canplay", handleCanPlay);
+        media.removeEventListener("loadstart", handleLoadStart);
+      };
+    }, [id, onPlay, onPause, onEnded, setCurrentlyPlaying]);
+
+    // Pause this media if another one starts playing
+    useEffect(() => {
+      const media = mediaRef.current;
+      if (!media) return;
+      if (currentlyPlaying && currentlyPlaying !== id && !media.paused) {
+        media.pause();
+      }
+    }, [currentlyPlaying, id]);
+
+    if (type === "video") {
+      return (
+        <>
+          {isLoading && (
+            <Skeleton className="absolute inset-0 w-full h-full z-10" />
+          )}
+          <video
+            ref={mediaRef as React.RefObject<HTMLVideoElement>}
+            className={cn(
+              className,
+              isLoading ? "opacity-0" : "opacity-100",
+              "transition-opacity duration-300"
+            )}
+            playsInline
+          >
+            <source src={src} type="video/mp4" />
+          </video>
+        </>
+      );
     }
-  }, [currentlyPlaying, id]);
 
-  if (type === 'video') {
     return (
-      <video
-        ref={mediaRef as React.RefObject<HTMLVideoElement>}
-        className={className}
-        playsInline
-      >
-        <source src={src} type="video/mp4" />
-      </video>
+      <>
+        <audio ref={mediaRef as React.RefObject<HTMLAudioElement>} src={src} />
+      </>
     );
   }
+);
 
-  return (
-    <audio
-      ref={mediaRef as React.RefObject<HTMLAudioElement>}
-      src={src}
-    />
-  );
-});
-
-MediaPlayer.displayName = 'MediaPlayer';
+MediaPlayer.displayName = "MediaPlayer";

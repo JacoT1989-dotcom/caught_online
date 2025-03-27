@@ -28,7 +28,10 @@ export default async function ProductsPage({
     // console.log(`Found ${products.length} products`); // Debug log
 
     return (
-      <ProductsClientPage products={products} searchParams={searchParams} />
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        {" "}
+        <ProductsClientPage products={products} searchParams={searchParams} />
+      </div>
     );
   } catch (error) {
     console.error("Error loading products:", error);

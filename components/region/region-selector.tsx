@@ -6,13 +6,13 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { MapPin, Truck } from "lucide-react";
 import { useRegion, type Region } from "@/hooks/use-region";
 import { PostalChecker } from "@/components/home/postal-checker";
 import { Separator } from "@/components/ui/separator";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { cn } from "@/lib/utils";
 
 const regions = [
@@ -65,9 +65,10 @@ export function RegionSelector({
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              <VisuallyHidden>Choose Your Delivery Area</VisuallyHidden>
-            </DialogTitle>
+            <DialogTitle>Choose Your Delivery Area</DialogTitle>
+            <DialogDescription>
+              Select a region for delivery information or check if your area is serviceable
+            </DialogDescription>
           </DialogHeader>
 
           <div className="mt-4 space-y-6">

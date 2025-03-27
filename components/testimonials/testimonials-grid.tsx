@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TESTIMONIALS } from "@/lib/constants/testimonials";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import dynamic from "next/dynamic";
 
 export function TestimonialsGrid() {
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -51,6 +52,15 @@ export function TestimonialsGrid() {
       emblaApi.scrollTo(index);
     }
   };
+  const TestimonialCard = dynamic(
+    () =>
+      import("./testimonial-card").then((mod) => ({
+        default: mod.TestimonialCard,
+      })),
+    {
+      loading: () => <div className="aspect-[9/16] bg-muted rounded-lg" />,
+    }
+  );
 
   const scrollPrev = () => emblaApi?.scrollPrev();
   const scrollNext = () => emblaApi?.scrollNext();

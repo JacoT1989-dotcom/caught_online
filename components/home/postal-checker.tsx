@@ -47,7 +47,7 @@ export function PostalChecker() {
               exit={{ opacity: 0, y: -20 }}
               className="text-xl font-semibold mb-4 text-muted-foreground"
             >
-              Unfortunately, we don`&apos;`t deliver to you yet!
+              Unfortunately, we don&apos;t deliver to you yet!
             </motion.h3>
           )
         ) : (
