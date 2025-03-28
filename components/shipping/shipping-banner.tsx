@@ -7,11 +7,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
-const FREE_SHIPPING_THRESHOLD = 950;
+const FREE_SHIPPING_THRESHOLD = 1200;
 
 // Base messages that will be duplicated
 const baseMessages = [
-  "Free Shipping Over R950!",
+  "Free Shipping Over R1200!",
   "Locally Wild-Caught Seafood Options",
   "Set your Seafood to Monthly Delivery and Save 10%!",
   "Next-Day Delivery Monday to Friday",
@@ -50,7 +50,7 @@ export function ShippingBanner() {
                     <div className="flex items-center gap-2 text-green-600">
                       <PartyPopper className="h-4 w-4" />
                       <span className="text-xs sm:text-sm">
-                        You`&apos;`ve got free shipping!
+                        You&apos;ve got free shipping!
                       </span>
                     </div>
                   ) : (

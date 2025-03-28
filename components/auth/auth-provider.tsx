@@ -43,12 +43,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
             const savedCart = JSON.parse(savedCartData);
 
             if (savedCart && savedCart.items && savedCart.items.length > 0) {
-              console.log(
-                "[Auth] Found saved cart with",
-                savedCart.items.length,
-                "items"
-              );
-
               // Clear current cart first
               cart.clearCart();
 
@@ -64,7 +58,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               // Update last saved cart state
               lastSavedCartRef.current = JSON.stringify(savedCart.items);
 
-              console.log("[Auth] Cart loaded successfully");
+              // console.log("[Auth] Cart loaded successfully");
             }
           }
         } catch (error) {
@@ -87,7 +81,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 total: cart.total,
               };
               localStorage.setItem(storageKey, JSON.stringify(cartData));
-              console.log("[Auth] Saved cart to localStorage before unload");
             } catch (error) {
               console.error("[Auth] Error saving cart before unload:", error);
             }
@@ -136,12 +129,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // Update last saved state
           lastSavedCartRef.current = currentCartState;
 
-          console.log(
-            "[Auth] Cart saved to localStorage",
-            cart.items.length > 0
-              ? `with ${cart.items.length} items`
-              : "(empty cart)"
-          );
+          // console.log(
+          //   "[Auth] Cart saved to localStorage",
+          //   cart.items.length > 0
+          //     ? `with ${cart.items.length} items`
+          //     : "(empty cart)"
+          // );
         }
       } catch (error) {
         console.error("[Auth] Error saving cart to localStorage:", error);

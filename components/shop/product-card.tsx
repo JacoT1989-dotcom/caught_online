@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import { trackAddToCart } from "@/lib/analytics";
 
 import { Button } from "../ui/button";
+import { AuthProvider } from "../auth/auth-provider";
+import { useAuth } from "@/hooks/use-auth";
 
 interface ProductCardProps {
   product: {
@@ -62,6 +64,7 @@ export function ProductCard({
   searchParams = {},
   forceSubscription = false,
 }: ProductCardProps) {
+  const user = useAuth();
   const [isHovered, setIsHovered] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const { items, addItem } = useCart();
@@ -138,11 +141,15 @@ export function ProductCard({
       quantity: 1,
     });
 
-    // Show subscription upsell only for one-time purchases
-    if (!shouldShowSubscriptionPrice) {
-      toast(<div className="relative">{/* Toast content... */}</div>, {
-        duration: 2000,
-      });
+    if (!user.accessToken) {
+      toast(
+        <div className="relative">
+          {"Login/register to keep track of your items in cart."}
+        </div>,
+        {
+          duration: 2000,
+        }
+      );
     } else {
       toast.success(`${product.title} added to cart`, {
         duration: 2000,
