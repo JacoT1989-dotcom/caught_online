@@ -106,7 +106,7 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
       document.removeEventListener("keydown", handleEscape);
       document.body.style.overflow = ""; // Restore scrolling
 
-      // Clear search on close
+      // Always clear the search when the modal closes
       setQuery("");
       setResults([]);
       setNoResults(false);
@@ -117,6 +117,19 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
       document.body.style.overflow = "";
     };
   }, [open, onOpenChange]);
+
+  // Not needed anymore - removing navigation tracking code
+  useEffect(() => {
+    // No navigation tracking needed with the new approach
+    // The modal will naturally unmount during page navigation
+  }, []);
+
+  // Instead, make sure we restore scrolling if the modal closes for any reason
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
 
   // Format price helper
   const formatPrice = (amount: string, currencyCode: string) => {
@@ -185,10 +198,16 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
     }
   };
 
-  // Navigate to product
+  // Navigate to product using a hard redirect instead of client-side navigation
   const handleProductClick = (handle: string) => {
-    router.push(`/products/${handle}`);
-    onOpenChange(false); // Close modal after navigation
+    // Get the URL for the product
+    const productUrl = `/products/${handle}`;
+
+    // Use window.location for a full page navigation
+    // This ensures the entire React app unmounts and remounts
+    window.location.href = productUrl;
+
+    // The modal will be destroyed as part of the full page reload
   };
 
   // Handle overlay click (close if clicking outside the modal)
