@@ -214,8 +214,8 @@ export function ProductCard({
                 {cartItem.subscription === "monthly"
                   ? "Monthly"
                   : cartItem.subscription === "bimonthly"
-                    ? "Every 2 Months"
-                    : "Every 3 Months"}
+                  ? "Every 2 Months"
+                  : "Every 3 Months"}
               </Badge>
             )}
           </div>

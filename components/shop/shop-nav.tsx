@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { FilterDropdown } from './filter-dropdown';
-import { ShopSearch } from './shop-search';
-import { SortDropdown } from './sort-dropdown';
-import { SubscriptionToggle } from './subscription-toggle';
-import { DealsToggle } from './deals-toggle';
+import { FilterDropdown } from "./filter-dropdown";
+import { ShopSearch } from "./shop-search";
+import { SortDropdown } from "./sort-dropdown";
+import { SubscriptionToggle } from "./subscription-toggle";
+import { DealsToggle } from "./deals-toggle";
 
 export function ShopNav() {
   return (
