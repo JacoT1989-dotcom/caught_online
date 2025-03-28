@@ -15,11 +15,13 @@ import { useCart } from "@/hooks/use-cart";
 import { RegionSelector } from "@/components/region/region-selector";
 import { ShopMenu } from "./shop-menu";
 import { InfoMenu } from "./info-menu";
+import { SearchModal } from "./SearchModal"; // Import the new SearchModal component
 import { cn } from "@/lib/utils";
 
 export function SiteHeader() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false); // New state for search modal
 
   return (
     <header className="sticky top-4 z-50 max-w-[1400px] mx-auto">
@@ -57,13 +59,19 @@ export function SiteHeader() {
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-2">
-            {/* Search - Both Mobile and Desktop */}
-            <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-              <Link href="/search">
-                <Search className="h-4 w-4" />
-                <span className="sr-only">Search</span>
-              </Link>
+            {/* Search Button - Opens Modal */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setIsSearchOpen(true)}
+            >
+              <Search className="h-4 w-4" />
+              <span className="sr-only">Search</span>
             </Button>
+
+            {/* Search Modal */}
+            <SearchModal open={isSearchOpen} onOpenChange={setIsSearchOpen} />
 
             {/* Region Selector */}
             <RegionSelector />
