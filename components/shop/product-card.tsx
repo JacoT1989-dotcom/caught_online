@@ -119,6 +119,22 @@ export function ProductCard({
 
     if (!isAvailable) return;
 
+    // Check if user is authenticated
+    if (!user.accessToken) {
+      toast(
+        <div className="relative text-large font-semibold">
+          {"Login/register to add items to cart. "}
+          <Link href="/login" className="text-blue-700 hover:underline">
+            Login
+          </Link>
+        </div>,
+        {
+          duration: 5000,
+        }
+      );
+      return; // Stop execution here for non-logged in users
+    }
+
     const item = {
       id: product.id,
       variantId: variant?.id || product.id,
@@ -141,23 +157,9 @@ export function ProductCard({
       quantity: 1,
     });
 
-    if (!user.accessToken) {
-      toast(
-        <div className="relative text-large font-semibold">
-          {"Login/register to keep track of your items in cart. "}
-          <Link href="/login" className="text-blue-700 hover:underline">
-            Login
-          </Link>
-        </div>,
-        {
-          duration: 2000,
-        }
-      );
-    } else {
-      toast.success(`${product.title} added to cart`, {
-        duration: 2000,
-      });
-    }
+    toast.success(`${product.title} added to cart`, {
+      duration: 2000,
+    });
   };
 
   return (

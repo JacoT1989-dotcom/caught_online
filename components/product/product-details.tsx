@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -35,6 +34,8 @@ import type { SubscriptionInterval } from "@/lib/types/subscription";
 import { DeliverySection } from "@/components/product/delivery/delivery-section";
 import { trackAddToCart } from "@/lib/analytics";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
+import Link from "next/link";
 
 const infoSections = [
   {
@@ -117,6 +118,8 @@ export function ProductDetails({ product }: ProductDetailsProps) {
   const { selectedRegion } = useRegion();
   const { loading, isAvailable, quantity, checkProductInventory } =
     useInventory();
+
+  const user = useAuth();
 
   // Add state for active image
   const [activeImageUrl, setActiveImageUrl] = useState<string>(
@@ -278,9 +281,24 @@ export function ProductDetails({ product }: ProductDetailsProps) {
         quantity: localQuantity, // Use the local quantity state
       });
 
-      toast.success(`${localQuantity}x ${product.title} added to cart`, {
-        duration: 2000,
-      });
+      if (!user.accessToken) {
+        toast(
+          <div className="relative text-large font-semibold">
+            {"Login/register to add items to cart. "}
+            <Link href="/login" className="text-blue-700 hover:underline">
+              Login
+            </Link>
+          </div>,
+          {
+            duration: 5000,
+          }
+        );
+        return; // Stop execution here for non-logged in users
+      } else {
+        toast.success(`${localQuantity}x ${product.title} added to cart`, {
+          duration: 2000,
+        });
+      }
     } catch (error) {
       console.error("Error adding to cart:", error);
     }

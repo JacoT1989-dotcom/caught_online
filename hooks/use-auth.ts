@@ -14,6 +14,7 @@ interface AuthState {
   expiresAt: string | null;
   user: any | null;
   customerAccessToken: string | null;
+  isLoggedIn: () => boolean; 
   login: (email: string, password: string) => Promise<void>;
   register: (userData: {
     email: string;
@@ -43,6 +44,17 @@ export const useAuth = create<AuthState>()(
       expiresAt: null,
       user: null,
       customerAccessToken: null,
+
+      isLoggedIn: () => {
+        const { accessToken, expiresAt } = get();
+        if (!accessToken || !expiresAt) {
+          return false;
+        }
+        // Check if token is expired
+        const now = new Date();
+        const expiry = new Date(expiresAt);
+        return now < expiry;
+      },
 
       login: async (email: string, password: string) => {
         try {
