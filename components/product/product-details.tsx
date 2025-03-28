@@ -36,6 +36,7 @@ import { trackAddToCart } from "@/lib/analytics";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import Link from "next/link";
+import Image from "next/image";
 
 const infoSections = [
   {
@@ -430,10 +431,12 @@ export function ProductDetails({ product }: ProductDetailsProps) {
         {/* Images */}
         <div className="space-y-4">
           <div className="relative aspect-square">
-            <img
+            <Image
               src={activeImageUrl}
               alt={product.featuredImage.altText || product.title}
+              fill
               className="w-full h-full object-cover rounded-lg"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
             {isSubscribed && (
               <Badge className="absolute top-2 right-2 flex items-center gap-1.5 bg-white text-[#f6424a] border border-[#f6424a]/20 shadow-sm">
@@ -459,10 +462,12 @@ export function ProductDetails({ product }: ProductDetailsProps) {
                   onClick={() => setActiveImageUrl(image.url)}
                   aria-label={`View ${image.altText || `image ${i + 1}`}`}
                 >
-                  <img
+                  <Image
                     src={image.url}
                     alt={image.altText || `${product.title} ${i + 1}`}
+                    fill
                     className="w-full h-full object-cover"
+                    sizes="(max-width: 768px) 100px, 50px"
                   />
                 </button>
               ))}
