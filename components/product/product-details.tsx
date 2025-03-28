@@ -303,16 +303,6 @@ export function ProductDetails({ product }: ProductDetailsProps) {
       quarterly: "",
     };
 
-    // Log all variants to see what we're working with
-    console.log(
-      "All variants:",
-      variants.map((v) => ({
-        id: v.node.id,
-        title: v.node.title,
-        price: v.node.price?.amount,
-      }))
-    );
-
     // Try to find variants based on their titles or options
     variants.forEach(({ node }) => {
       if (node.title) {

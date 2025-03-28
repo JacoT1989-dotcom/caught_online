@@ -143,8 +143,11 @@ export function ProductCard({
 
     if (!user.accessToken) {
       toast(
-        <div className="relative">
-          {"Login/register to keep track of your items in cart."}
+        <div className="relative text-large font-semibold">
+          {"Login/register to keep track of your items in cart. "}
+          <Link href="/login" className="text-blue-700 hover:underline">
+            Login
+          </Link>
         </div>,
         {
           duration: 2000,
