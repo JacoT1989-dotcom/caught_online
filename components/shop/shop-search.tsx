@@ -6,13 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, X, Loader2 } from "lucide-react";
 import { useDebounce } from "@/hooks/use-debounce";
-import { useShopSearch } from "@/hooks/use-shop-search";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { shopifyFetch } from "@/lib/shopify/client";
 import { useOnClickOutside } from "@/hooks/use-click-outside";
 
-// Simplified search query
+// Search query
 const SEARCH_PRODUCTS_QUERY = `
   query SearchProducts($query: String!, $first: Int = 5) {
     products(first: $first, query: $query) {
@@ -39,7 +38,6 @@ const SEARCH_PRODUCTS_QUERY = `
   }
 `;
 
-// Basic interface
 interface SearchProduct {
   id: string;
   title: string;
@@ -59,32 +57,42 @@ interface SearchProduct {
 }
 
 export function ShopSearch() {
-  // Initialize references and state
   const router = useRouter();
   const searchParams = useSearchParams();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const lastSearchRef = useRef("");
   const isTypingRef = useRef(false);
-  const lastQueryRef = useRef("");
-  const hasInitializedRef = useRef(false);
+  const preventSyncRef = useRef(false);
 
-  // Local state
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchProduct[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
 
-  // On mount, get query from URL
+  // Check if in a collection
+  const inCollection = searchParams.has("collection");
+  const collectionName = searchParams.get("collection") || "";
+
+  // Sync search input with URL query parameter - run this on every URL change
   useEffect(() => {
-    if (hasInitializedRef.current) return;
+    // Skip if we're typing (to prevent cursor jumping)
+    if (isTypingRef.current || preventSyncRef.current) return;
 
-    const urlQuery = searchParams.get("q") || "";
-    if (urlQuery) {
+    const urlQuery = searchParams.get("q");
+    if (urlQuery !== null) {
+      // Update input to match URL query
       setQuery(urlQuery);
+    } else if (query && !urlQuery) {
+      // Clear input if URL has no query
+      setQuery("");
     }
+  }, [searchParams, query]);
 
-    hasInitializedRef.current = true;
-  }, [searchParams]);
+  // Handle clicks outside dropdown
+  useOnClickOutside(dropdownRef, () => {
+    setShowDropdown(false);
+  });
 
   // Format price helper
   const formatPrice = (amount: string, currencyCode: string) => {
@@ -94,33 +102,23 @@ export function ShopSearch() {
     }).format(parseFloat(amount));
   };
 
-  // Handle outside clicks
-  useOnClickOutside(dropdownRef, () => {
-    if (!isTypingRef.current) {
-      setShowDropdown(false);
-    }
-  });
-
-  // Perform search
+  // Search for products
   const performSearch = async (searchText: string) => {
-    // Don't search empty strings or if the query hasn't changed
-    if (!searchText.trim() || searchText === lastQueryRef.current) {
+    if (!searchText.trim() || searchText === lastSearchRef.current) {
       return;
     }
 
-    lastQueryRef.current = searchText;
+    lastSearchRef.current = searchText;
 
     try {
       setIsLoading(true);
 
-      // Prepare query with wildcards
       const enhancedQuery = searchText
         .split(" ")
         .filter((term) => term.trim())
         .map((term) => `*${term}*`)
         .join(" OR ");
 
-      // Make request
       const { data } = await shopifyFetch({
         query: SEARCH_PRODUCTS_QUERY,
         variables: {
@@ -143,80 +141,93 @@ export function ShopSearch() {
     }
   };
 
-  // Debounce search to avoid too many API calls
+  // Debounced search
   const debouncedSearch = useDebounce(performSearch, 400);
-
-  // Debounce URL updates separately
-  const updateURL = useDebounce((value: string) => {
-    // Skip if value matches current URL query
-    const currentQuery = searchParams.get("q");
-    if (value.trim() === currentQuery) return;
-
-    const params = new URLSearchParams(searchParams.toString());
-
-    if (!value.trim()) {
-      params.delete("q");
-    } else {
-      params.set("q", value);
-    }
-
-    router.push(`/products?${params.toString()}`);
-  }, 800);
 
   // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     isTypingRef.current = true;
+    preventSyncRef.current = true;
 
-    // Update input
     setQuery(value);
 
-    // Handle search and dropdown
     if (value.trim()) {
       setShowDropdown(true);
       debouncedSearch(value);
     } else {
-      // Clear results for empty input
       setShowDropdown(false);
       setResults([]);
-      lastQueryRef.current = "";
+
+      // Clear search from URL if it exists
+      if (searchParams.has("q")) {
+        const params = new URLSearchParams();
+        if (inCollection) {
+          params.set("collection", collectionName);
+        }
+        router.push(`/products?${params.toString()}`);
+      }
     }
 
-    // Update URL (debounced)
-    updateURL(value);
-
-    // Reset typing flag
+    // Reset typing flag after a delay
     setTimeout(() => {
       isTypingRef.current = false;
-    }, 300);
+      // Keep preventing sync a bit longer to avoid jumping
+      setTimeout(() => {
+        preventSyncRef.current = false;
+      }, 300);
+    }, 200);
   };
 
-  // Clear search handler
+  // Clear search
   const handleClearSearch = () => {
-    // Clear everything
+    preventSyncRef.current = true;
     setQuery("");
     setResults([]);
     setShowDropdown(false);
-    lastQueryRef.current = "";
 
-    // Update URL if needed
     if (searchParams.has("q")) {
-      const params = new URLSearchParams(searchParams.toString());
-      params.delete("q");
+      const params = new URLSearchParams();
+      if (inCollection) {
+        params.set("collection", collectionName);
+      }
       router.push(`/products?${params.toString()}`);
     }
+
+    // Reset prevent sync flag after navigation
+    setTimeout(() => {
+      preventSyncRef.current = false;
+    }, 300);
   };
 
-  // Select result handler
-  const handleSelectResult = (title: string) => {
-    // Update query
-    setQuery(title);
+  // Apply global search - ALWAYS overrides collection filter
+  const applyGlobalSearch = (searchTerm: string) => {
+    // Set prevent sync to true to avoid potential race conditions
+    preventSyncRef.current = true;
+
+    // Update input value first
+    setQuery(searchTerm);
+
+    // Create a new params object with ONLY the search term
+    const params = new URLSearchParams();
+    params.set("q", searchTerm);
+
+    // Close dropdown
     setShowDropdown(false);
 
-    // Navigate
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("q", title);
+    // Navigate to products page with ONLY this search filter - no collection
     router.push(`/products?${params.toString()}`);
+
+    // Reset prevent sync flag after navigation
+    setTimeout(() => {
+      preventSyncRef.current = false;
+    }, 300);
+  };
+
+  // Submit search on Enter key
+  const handleSearchSubmit = () => {
+    if (!query.trim()) return;
+    applyGlobalSearch(query);
   };
 
   return (
@@ -226,7 +237,14 @@ export function ShopSearch() {
 
         <Input
           ref={inputRef}
-          placeholder="Search products by name, type, description..."
+          placeholder={
+            inCollection
+              ? `Search in ${
+                  collectionName.charAt(0).toUpperCase() +
+                  collectionName.slice(1)
+                }...`
+              : "Search products by name, type, description..."
+          }
           value={query}
           onChange={handleInputChange}
           onFocus={() => {
@@ -236,12 +254,8 @@ export function ShopSearch() {
             }
           }}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && query.trim()) {
-              setShowDropdown(false);
-
-              const params = new URLSearchParams(searchParams.toString());
-              params.set("q", query);
-              router.push(`/products?${params.toString()}`);
+            if (e.key === "Enter") {
+              handleSearchSubmit();
             }
           }}
           className={cn(
@@ -281,7 +295,8 @@ export function ShopSearch() {
                     className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
                     onMouseDown={(e) => {
                       e.preventDefault();
-                      handleSelectResult(product.title);
+                      // ALWAYS do a global search, ignoring collection
+                      applyGlobalSearch(product.title);
                     }}
                   >
                     <div className="flex items-center gap-3">
@@ -331,7 +346,8 @@ export function ShopSearch() {
                   className="w-full justify-start text-sm"
                   onMouseDown={(e) => {
                     e.preventDefault();
-                    handleSelectResult(query);
+                    // ALWAYS do a global search, ignoring collection
+                    applyGlobalSearch(query);
                   }}
                 >
                   View all results for &quot;{query}&quot;
