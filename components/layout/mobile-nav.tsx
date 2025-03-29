@@ -27,7 +27,7 @@ const menuItems = [
   { label: "Sustainability", href: "/sustainability" },
   { label: "Why Frozen?", href: "/why-frozen" },
   { label: "Subscription", href: "/subscription" },
-  { label: "Recipes", href: "/recipes" },
+  { label: "Recipes", href: "/blog" },
   { label: "Contact Us", href: "/contact" },
   { label: "Terms & Conditions", href: "/terms" },
   { label: "Privacy Policy", href: "/privacy" },
