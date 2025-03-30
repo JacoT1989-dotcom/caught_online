@@ -1,8 +1,8 @@
+// components/reviews/rating-summary.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { getProductRatingSummary, RatingSummary } from '@/lib/reviews/stamped';
-import { Star, StarHalf } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { getProductRatingSummary, type RatingSummary } from '@/lib/reviews/stamped';
 
 interface RatingSummaryProps {
   productId: string;
@@ -11,101 +11,92 @@ interface RatingSummaryProps {
 export default function RatingSummaryComponent({ productId }: RatingSummaryProps) {
   const [summary, setSummary] = useState<RatingSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSummary = async () => {
       setLoading(true);
+      setError(null);
+      
       try {
         const data = await getProductRatingSummary(productId);
         setSummary(data);
-      } catch (error) {
-        console.error('Error fetching rating summary:', error);
+      } catch (err) {
+        console.error('Error fetching rating summary:', err);
+        setError('Failed to load rating summary.');
       } finally {
         setLoading(false);
       }
     };
-
-    fetchSummary();
+    
+    if (productId) {
+      fetchSummary();
+    }
   }, [productId]);
 
   if (loading) {
-    return <div className="h-24 w-full animate-pulse rounded-md bg-gray-200"></div>;
+    return <div className="h-32 flex items-center justify-center">Loading ratings...</div>;
   }
 
-  if (!summary) {
-    return null;
+  if (error) {
+    return <div className="text-red-500">{error}</div>;
   }
 
-  const { averageRating, totalReviews, ratingDistribution } = summary;
-
-  // Find the highest count to calculate percentage
-  const maxCount = Math.max(...Object.values(ratingDistribution));
-
-  // Generate star display
-  const renderStars = (rating: number) => {
-    const fullStars = Math.floor(rating);
-    const halfStar = rating % 1 >= 0.5;
-    const stars = [];
-
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(
-        <Star key={`full-${i}`} className="text-yellow-400 fill-yellow-400" size={20} />
-      );
-    }
-
-    if (halfStar) {
-      stars.push(<StarHalf key="half" className="text-yellow-400 fill-yellow-400" size={20} />);
-    }
-
-    const emptyStars = 5 - stars.length;
-    for (let i = 0; i < emptyStars; i++) {
-      stars.push(<Star key={`empty-${i}`} className="text-gray-300" size={20} />);
-    }
-
-    return stars;
-  };
+  if (!summary || summary.totalReviews === 0) {
+    return (
+      <div className="p-4 bg-gray-50 rounded-lg">
+        <p>No reviews yet. Be the first to write a review!</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6">
-      <div className="flex flex-col md:flex-row">
-        {/* Overall Rating */}
-        <div className="mb-4 flex flex-col items-center justify-center md:mb-0 md:w-1/3">
-          <div className="text-4xl font-bold text-gray-900">
-            {averageRating.toFixed(1)}
-          </div>
-          <div className="mt-1 flex">
-            {renderStars(averageRating)}
-          </div>
-          <div className="mt-1 text-sm text-gray-500">
-            Based on {totalReviews} {totalReviews === 1 ? 'review' : 'reviews'}
-          </div>
-        </div>
-
-        {/* Rating Distribution */}
-        <div className="md:w-2/3">
-          {[5, 4, 3, 2, 1].map((rating) => (
-            <div key={rating} className="mb-2 flex items-center">
-              <div className="w-8 text-right text-sm font-medium text-gray-900">
-                {rating}
-              </div>
-              <Star className="ml-1 text-yellow-400" size={14} />
-              <div className="ml-2 flex-1">
-                <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
-                  <div
-                    className="h-full rounded-full bg-yellow-400"
-                    style={{
-                      width: `${maxCount > 0 ? (ratingDistribution[rating] / maxCount) * 100 : 0}%`,
-                    }}
-                  ></div>
-                </div>
-              </div>
-              <div className="ml-2 w-8 text-sm text-gray-500">
-                {ratingDistribution[rating]}
-              </div>
+    <div className="p-4 bg-gray-50 rounded-lg">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <div className="flex">
+              {[1, 2, 3, 4, 5].map(star => (
+                <span key={star} className="text-yellow-400 text-xl">
+                  {star <= Math.round(summary.averageRating) ? '★' : '☆'}
+                </span>
+              ))}
             </div>
-          ))}
+            <span className="text-lg font-medium">
+              {summary.averageRating.toFixed(1)}
+            </span>
+            <span className="text-gray-500">
+              ({summary.totalReviews} {summary.totalReviews === 1 ? 'review' : 'reviews'})
+            </span>
+          </div>
+          
+          {/* Rating distribution */}
+          <div className="mt-4 space-y-2">
+            {[5, 4, 3, 2, 1].map(rating => {
+              const count = summary.ratingDistribution[rating] || 0;
+              const percentage = summary.totalReviews > 0 
+                ? (count / summary.totalReviews) * 100 
+                : 0;
+                
+              return (
+                <div key={rating} className="flex items-center">
+                  <span className="w-12 text-sm">{rating} stars</span>
+                  <div className="w-48 h-2 mx-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-yellow-400" 
+                      style={{ width: `${percentage}%` }}
+                    ></div>
+                  </div>
+                  <span className="text-sm text-gray-500">
+                    {count} ({percentage.toFixed(0)}%)
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
   );
 }
+

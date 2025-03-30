@@ -605,11 +605,7 @@ export function ProductDetails({ product }: ProductDetailsProps) {
         <ProductRecommendations productId={product.id} type="new" count={10} />
       </section>
 
-      {/* Reviews */}
-      <section>
-        <h2 className="text-2xl font-bold mb-6">Customer Reviews</h2>
-        <ProductReviews productId={product.id} />
-      </section>
+   
 
       <RegionPrompt
         open={showRegionPrompt}

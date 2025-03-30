@@ -4,9 +4,7 @@ import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { ProductErrorBoundary } from "@/components/error-boundary/product-error-boundary";
 import { getProduct } from "@/lib/shopify/products";
 import { collections, getCollectionByHandle } from "@/lib/collections";
-import ProductReviews from "@/components/reviews/product-reviews";
-// import StampedReviews from "@/components/reviews/StampedReviews";
-
+import StampedReviews from "@/components/reviews/StampedReviews";
 
 interface ProductPageProps {
   params: {
@@ -90,7 +88,7 @@ export default async function ProductPage({
 
   return (
     <div className="px-4 md:px-8 py-2">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-[1440px] mx-auto">
         <div className="mb-1">
           <Breadcrumbs items={breadcrumbItems} />
         </div>
@@ -98,23 +96,20 @@ export default async function ProductPage({
           <ProductDetails product={product} />
 
           <div className="mt-16">
-            {/* <StampedReviews 
+            
+          <StampedReviews
+  productId={product.id}
+  productTitle={product.title}
+  productUrl={`/products/${product.handle}`} // Construct the URL from the handle
+  productHandle={params.handle}
+/>
+{/* <StampedReviews 
               productId={product.id}
               productTitle={product.title}
               productUrl={productUrl}
-            />
-             */}
-             <div className="mt-16">
-  {/* <StampedReviews 
-    productId={product.id}
-    productTitle={product.title}
-    productUrl={productUrl}
-  /> */}
-  <ProductReviews 
-    productId={product.id} 
-    productName={product.title} 
-  />
-</div>
+              productHandle={params.handle}
+              useDashboardApi={true}
+            /> */}
           </div>
         </ProductErrorBoundary>
       </div>

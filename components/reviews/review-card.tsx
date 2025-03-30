@@ -62,14 +62,6 @@ export default function ReviewCard({ review, onVoteHelpful }: ReviewCardProps) {
             </span>
           )}
         </div>
-        
-        <button
-          onClick={() => onVoteHelpful && onVoteHelpful(review.id)}
-          className="flex items-center space-x-1 rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-200"
-        >
-          <ThumbsUp size={12} />
-          <span>Helpful {review.helpfulVotes > 0 ? `(${review.helpfulVotes})` : ''}</span>
-        </button>
       </div>
     </div>
   );
