@@ -46,9 +46,6 @@ export async function createCheckout(items: any[]) {
       throw new Error("No items with valid variantId found in cart");
     }
 
-    // Log for debugging
-    console.log("Creating checkout with valid items:", validItems);
-
     const lineItems = items.map((item) => ({
       variantId: item.variantId,
       quantity: item.quantity,

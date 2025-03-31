@@ -260,7 +260,35 @@ export function ProductDetails({ product }: ProductDetailsProps) {
       return;
     }
 
+    // Simple way to check authentication
+    let isLoggedIn = false;
     try {
+      if (typeof window !== "undefined") {
+        const authData = localStorage.getItem("auth-storage");
+        if (authData) {
+          const parsedData = JSON.parse(authData);
+          isLoggedIn = !!parsedData?.state?.accessToken;
+        }
+      }
+    } catch (error) {
+      console.error("Error checking auth state:", error);
+      isLoggedIn = false;
+    }
+
+    // If not logged in, show simple error message and redirect
+    if (!isLoggedIn) {
+      toast.error("Please log in to add items to cart");
+
+      // Navigate to login after a brief delay
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 2000);
+
+      return;
+    }
+
+    try {
+      // User is logged in, add to cart
       addItem({
         id: product.id,
         variantId: variantId,
@@ -268,7 +296,7 @@ export function ProductDetails({ product }: ProductDetailsProps) {
         price: finalPrice,
         originalPrice: shouldShowSubscriptionPrice ? regularPrice : undefined,
         image: product.featuredImage.url,
-        quantity: localQuantity, // Use the local quantity state
+        quantity: localQuantity,
         subscription: shouldShowSubscriptionPrice
           ? subscriptionInterval
           : undefined,
@@ -279,29 +307,15 @@ export function ProductDetails({ product }: ProductDetailsProps) {
         title: product.title,
         price: finalPrice,
         variantId: variantId,
-        quantity: localQuantity, // Use the local quantity state
+        quantity: localQuantity,
       });
 
-      if (!user.accessToken) {
-        toast(
-          <div className="relative text-large font-semibold">
-            {"Login/register to add items to cart. "}
-            <Link href="/login" className="text-blue-700 hover:underline">
-              Login
-            </Link>
-          </div>,
-          {
-            duration: 5000,
-          }
-        );
-        return; // Stop execution here for non-logged in users
-      } else {
-        toast.success(`${localQuantity}x ${product.title} added to cart`, {
-          duration: 2000,
-        });
-      }
+      toast.success(`${localQuantity}x ${product.title} added to cart`, {
+        duration: 2000,
+      });
     } catch (error) {
       console.error("Error adding to cart:", error);
+      toast.error("Error adding to cart. Please try again.");
     }
   };
 

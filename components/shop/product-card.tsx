@@ -112,29 +112,67 @@ export function ProductCard({
   };
 
   const discountPercentage = isClient ? getDiscountPercentage() : null;
-
+  // For ProductCard.tsx
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
     if (!isAvailable) return;
 
-    // Check if user is authenticated
-    if (!user.accessToken) {
-      toast(
-        <div className="relative text-large font-semibold">
-          {"Login/register to add items to cart. "}
-          <Link href="/login" className="text-blue-700 hover:underline">
-            Login
-          </Link>
-        </div>,
-        {
-          duration: 5000,
+    // Try multiple authentication checks
+    let isLoggedIn = false;
+
+    try {
+      // Check 1: Look for the logged_in cookie
+      const getCookie = (name: string): string | null => {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.startsWith(name + "=")) {
+            return cookie.substring(name.length + 1);
+          }
         }
-      );
-      return; // Stop execution here for non-logged in users
+        return null;
+      };
+
+      const loggedInCookie = getCookie("logged_in");
+      isLoggedIn = loggedInCookie === "true";
+      console.log("Check 1 - Logged in cookie:", isLoggedIn);
+
+      // Check 2: Look for user auth in localStorage (fallback)
+      if (!isLoggedIn) {
+        const hasUserCart = Object.keys(localStorage).some(
+          (key) => key.includes("user-cart") || key.includes("Customer")
+        );
+        isLoggedIn = hasUserCart;
+        console.log("Check 2 - User cart in storage:", isLoggedIn);
+      }
+
+      // Check 3: Use the useAuth hook (fallback)
+      if (!isLoggedIn) {
+        isLoggedIn = !!user.accessToken;
+        console.log("Check 3 - useAuth accessToken:", isLoggedIn);
+      }
+
+      console.log("Final authentication result:", isLoggedIn);
+    } catch (error) {
+      console.error("Error checking authentication:", error);
+      // Default to allowing the action in case of an error
+      isLoggedIn = true;
     }
 
+    // If user is not authenticated, show login message and redirect
+    if (!isLoggedIn) {
+      toast.error("Please log in to add items to cart");
+
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 2000);
+
+      return;
+    }
+
+    // User is authenticated, proceed with adding to cart
     const item = {
       id: product.id,
       variantId: variant?.id || product.id,
@@ -216,8 +254,8 @@ export function ProductCard({
                 {cartItem.subscription === "monthly"
                   ? "Monthly"
                   : cartItem.subscription === "bimonthly"
-                  ? "Every 2 Months"
-                  : "Every 3 Months"}
+                    ? "Every 2 Months"
+                    : "Every 3 Months"}
               </Badge>
             )}
           </div>

@@ -77,8 +77,6 @@ export async function addCustomerAddress(
       lastName: address.lastName || customerData.lastName,
     };
 
-    console.log("Adding address with data:", JSON.stringify(completeAddress));
-
     const { data, errors } = await shopifyFetch({
       query: ADD_ADDRESS_MUTATION,
       variables: {
@@ -187,14 +185,6 @@ export async function registerCustomer(input: {
   const { address, ...customerInput } = input;
 
   try {
-    console.log(
-      "Registering customer with data:",
-      JSON.stringify({
-        ...customerInput,
-        password: "******", // Don't log actual password
-      })
-    );
-
     const { data, errors } = await shopifyFetch({
       query: CUSTOMER_REGISTER_MUTATION,
       variables: {
@@ -220,19 +210,15 @@ export async function registerCustomer(input: {
     }
 
     const customerData = data.customerCreate.customer;
-    console.log("Customer created successfully:", customerData.id);
 
     // If address is provided and customer was created successfully, add the address
     if (address) {
       try {
-        console.log("Attempting to add address for customer:", customerData.id);
-
         // We'll need to login first to get access token
         const { accessToken } = await loginCustomer(
           input.email,
           input.password
         );
-        console.log("Login successful, obtained access token");
 
         // Add a delay to ensure token is properly processed
         await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -245,7 +231,6 @@ export async function registerCustomer(input: {
         };
 
         await addCustomerAddress(accessToken, addressData);
-        console.log("Address added successfully");
       } catch (addressError) {
         console.error("Error adding address:", addressError);
         // We won't fail the registration if adding address fails

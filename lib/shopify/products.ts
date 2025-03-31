@@ -289,13 +289,6 @@ export async function getProducts(options: GetProductsOptions = {}) {
   } = options;
 
   try {
-    // console.log("Fetching products with options:", {
-    //   collection,
-    //   query,
-    //   sortKey,
-    //   reverse,
-    // });
-
     // Use different queries for collection vs all products
     if (collection) {
       const { data } = await shopifyFetch({
@@ -373,15 +366,11 @@ export async function getProduct(handle: string) {
   }
 
   try {
-    // console.log("Fetching product with handle:", handle);
-
     const { data } = await shopifyFetch({
       query: GET_PRODUCT_BY_HANDLE,
       variables: { handle },
       // Remove cache: 'no-store' or use next: { revalidate: 3600 } for ISR
     });
-
-    // console.log("Raw product API response:", data);
 
     const product = data?.product;
     if (!product) {

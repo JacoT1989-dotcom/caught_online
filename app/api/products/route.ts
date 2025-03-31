@@ -51,11 +51,6 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    // console.log(
-    //   "Fetching products with token:",
-    //   SHOPIFY_CONFIG.storefrontAccessToken
-    // );
-
     const response = await fetch(SHOPIFY_CONFIG.endpoint, {
       method: "POST",
       headers: {
@@ -76,12 +71,6 @@ export async function GET() {
     }
 
     const jsonResponse = await response.json();
-
-    // Log the response structure to help debug
-    // console.log(
-    //   "Shopify response structure:",
-    //   JSON.stringify(jsonResponse, null, 2).substring(0, 200) + "..."
-    // );
 
     if (!jsonResponse.data?.products?.edges) {
       console.error("Invalid response format:", jsonResponse);
