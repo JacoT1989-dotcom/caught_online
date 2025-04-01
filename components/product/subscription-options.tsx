@@ -10,6 +10,11 @@ import { cn } from "@/lib/utils";
 import { Percent, Plus, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { handleSubscriptionFlow } from "../subscriptionflow/handler";
+import {
+  trackSubscription,
+  trackAddToCart,
+  trackSelectItem,
+} from "@/lib/analytics";
 
 // Define a type for subscription variant IDs by interval
 interface SubscriptionVariantIds {
@@ -27,6 +32,7 @@ interface SubscriptionOptionsProps {
   onAddToCart: () => void;
   isAvailable?: boolean;
   productId: string; // The base product ID (not variant ID)
+  productTitle?: string; // Added product title for better tracking
   subscriptionVariantIds: SubscriptionVariantIds; // Variant IDs for subscription options
   quantity?: number;
   useSubscriptionFlow?: boolean;
@@ -41,6 +47,7 @@ export function SubscriptionOptions({
   onAddToCart,
   isAvailable = true,
   productId,
+  productTitle = "Product", // Default to "Product" if title not provided
   subscriptionVariantIds,
   quantity = 1,
   useSubscriptionFlow = true,
@@ -52,25 +59,86 @@ export function SubscriptionOptions({
   // Handle the Add to Cart button click
   const handleAddToCart = () => {
     onPurchaseTypeChange("onetime");
+
+    // Track add to cart using the analytics module
+    trackAddToCart({
+      id: productId,
+      title: productTitle,
+      price: price,
+      quantity: quantity,
+      variantId: "", // One-time purchase may not have a variant ID
+    });
+
     onAddToCart();
   };
 
-  // Inside the SubscriptionOptions component
+  // Track when user changes subscription interval
+  const handleIntervalChange = (value: SubscriptionInterval) => {
+    // Track interval selection
+    trackSelectItem(
+      {
+        id: subscriptionVariantIds[value] || productId,
+        title: `${productTitle} - ${value} subscription`,
+        price: price * (1 - (SUBSCRIPTION_PLANS[value]?.discount || 0)),
+        quantity: quantity,
+        variantId: subscriptionVariantIds[value],
+      },
+      "Subscription Options"
+    );
+
+    onSubscriptionIntervalChange(value);
+  };
+
+  // Track when user changes purchase type
+  const handlePurchaseTypeChange = (value: "onetime" | "subscription") => {
+    onPurchaseTypeChange(value);
+
+    if (value === "subscription") {
+      setShowAllOptions(true);
+
+      // Track when user selects subscription option
+      trackSelectItem(
+        {
+          id: subscriptionVariantIds[subscriptionInterval] || productId,
+          title: `${productTitle} - Subscription`,
+          price: discountedPrice,
+          quantity: quantity,
+          variantId: subscriptionVariantIds[subscriptionInterval],
+        },
+        "Purchase Options"
+      );
+    } else {
+      // Track when user selects one-time purchase
+      trackSelectItem(
+        {
+          id: productId,
+          title: `${productTitle} - One-time purchase`,
+          price: price,
+          quantity: quantity,
+        },
+        "Purchase Options"
+      );
+    }
+  };
 
   // Handle the Subscribe Now button click
   const handleSubscribeNow = () => {
-    // Debug logs
-    console.log("Subscribe Now clicked");
-    console.log("Purchase type:", purchaseType);
-    console.log("Subscription interval:", subscriptionInterval);
-    console.log("Product ID:", productId);
-    console.log("Subscription variant IDs:", subscriptionVariantIds);
-    console.log(
-      "Selected variant ID:",
-      subscriptionVariantIds[subscriptionInterval]
+    onPurchaseTypeChange("subscription");
+
+    // Track subscription purchase
+    trackSubscription(
+      `${subscriptionInterval}-subscription`,
+      discountedPrice * quantity
     );
 
-    onPurchaseTypeChange("subscription");
+    // Also track as a standard purchase for compatibility with other analytics
+    trackAddToCart({
+      id: subscriptionVariantIds[subscriptionInterval] || productId,
+      title: `${productTitle} - ${subscriptionInterval} subscription`,
+      price: discountedPrice,
+      quantity: quantity,
+      variantId: subscriptionVariantIds[subscriptionInterval],
+    });
 
     if (useSubscriptionFlow) {
       // Ensure we're using the correct variant ID for the selected interval
@@ -102,7 +170,7 @@ export function SubscriptionOptions({
       <div>
         <button
           type="button"
-          onClick={() => onPurchaseTypeChange("onetime")}
+          onClick={() => handlePurchaseTypeChange("onetime")}
           className={cn(
             "w-full text-left transition-colors duration-200",
             "rounded-lg border p-4",
@@ -148,10 +216,7 @@ export function SubscriptionOptions({
       <div>
         <button
           type="button"
-          onClick={() => {
-            onPurchaseTypeChange("subscription");
-            setShowAllOptions(true);
-          }}
+          onClick={() => handlePurchaseTypeChange("subscription")}
           className={cn(
             "w-full text-left transition-colors duration-200",
             "rounded-lg border p-4",
@@ -194,13 +259,13 @@ export function SubscriptionOptions({
           <RadioGroup
             value={subscriptionInterval}
             onValueChange={(value) =>
-              onSubscriptionIntervalChange(value as SubscriptionInterval)
+              handleIntervalChange(value as SubscriptionInterval)
             }
           >
             {/* Monthly Option */}
             <button
               type="button"
-              onClick={() => onSubscriptionIntervalChange("monthly")}
+              onClick={() => handleIntervalChange("monthly")}
               className={cn(
                 "w-full text-left transition-colors duration-200",
                 "rounded-lg border p-4",
@@ -248,7 +313,7 @@ export function SubscriptionOptions({
                 {/* Bi-monthly Option */}
                 <button
                   type="button"
-                  onClick={() => onSubscriptionIntervalChange("bimonthly")}
+                  onClick={() => handleIntervalChange("bimonthly")}
                   className={cn(
                     "w-full text-left transition-colors duration-200",
                     "rounded-lg border p-4 mt-2",
@@ -293,7 +358,7 @@ export function SubscriptionOptions({
                 {/* Quarterly Option */}
                 <button
                   type="button"
-                  onClick={() => onSubscriptionIntervalChange("quarterly")}
+                  onClick={() => handleIntervalChange("quarterly")}
                   className={cn(
                     "w-full text-left transition-colors duration-200",
                     "rounded-lg border p-4 mt-2",

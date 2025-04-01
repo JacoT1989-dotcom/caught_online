@@ -84,6 +84,15 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [noResults, setNoResults] = useState(false);
 
+  // 1. Track when the search modal is opened
+  useEffect(() => {
+    if (open && typeof window !== "undefined" && window.dataLayer) {
+      window.dataLayer.push({
+        event: "open_search_modal",
+        source: "header",
+      });
+    }
+  }, [open]);
   // Close on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -192,14 +201,58 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
 
     if (value.trim()) {
       debouncedSearch(value);
+
+      // Track the search query event
+      if (
+        typeof window !== "undefined" &&
+        window.dataLayer &&
+        value.length > 2
+      ) {
+        window.dataLayer.push({
+          event: "search_query",
+          search_term: value,
+        });
+      }
     } else {
       setResults([]);
       setNoResults(false);
     }
   };
 
+  // 3. Track search results
+  useEffect(() => {
+    // When search results change and query is not empty
+    if (
+      query &&
+      !isLoading &&
+      typeof window !== "undefined" &&
+      window.dataLayer
+    ) {
+      window.dataLayer.push({
+        event: "search_results",
+        search_term: query,
+        results_count: results.length,
+        has_results: results.length > 0,
+      });
+    }
+  }, [results, isLoading, query]);
+
   // Navigate to product using a hard redirect instead of client-side navigation
-  const handleProductClick = (handle: string) => {
+  const handleProductClick = (
+    handle: string,
+    title: string,
+    position: number
+  ) => {
+    // Track the search result click
+    if (typeof window !== "undefined" && window.dataLayer) {
+      window.dataLayer.push({
+        event: "search_result_click",
+        search_term: query,
+        product_title: title,
+        product_handle: handle,
+        position: position,
+      });
+    }
     // Get the URL for the product
     const productUrl = `/products/${handle}`;
 
@@ -276,11 +329,13 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
             </div>
           ) : results.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {results.map((product) => (
+              {results.map((product, index) => (
                 <div
                   key={product.id}
                   className="border rounded-lg overflow-hidden bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => handleProductClick(product.handle)}
+                  onClick={() =>
+                    handleProductClick(product.handle, product.title, index + 1)
+                  }
                 >
                   <div className="relative aspect-square bg-gray-100 dark:bg-gray-800">
                     {product.featuredImage?.url ? (

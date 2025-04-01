@@ -1,23 +1,29 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation';
-import { useSubscriptionToggle } from '@/hooks/use-subscription-toggle';
-import type { SubscriptionInterval } from '@/lib/types/subscription';
-import { cn } from '@/lib/utils';
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { useSubscriptionToggle } from "@/hooks/use-subscription-toggle";
+import type { SubscriptionInterval } from "@/lib/types/subscription";
+import { cn } from "@/lib/utils";
 
 interface SubscriptionButtonProps {
   interval: SubscriptionInterval;
   children: React.ReactNode;
   className?: string;
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  variant?:
+    | "default"
+    | "destructive"
+    | "outline"
+    | "secondary"
+    | "ghost"
+    | "link";
 }
 
-export function SubscriptionButton({ 
-  interval, 
-  children, 
+export function SubscriptionButton({
+  interval,
+  children,
   className,
-  variant = 'default'
+  variant = "default",
 }: SubscriptionButtonProps) {
   const router = useRouter();
   const { toggle, setInterval } = useSubscriptionToggle();

@@ -11,10 +11,8 @@ import {
   getProductRecommendations,
   getProductsByType,
   getRandomProducts,
-} from "@/lib/shopify/recommendations"; // Adjust import path as needed
-
-// Use the exact same Product interface as in your ProductCard component
-// to ensure type compatibility
+} from "@/lib/shopify/recommendations";
+import { trackSelectItem } from "@/lib/analytics";
 interface Product {
   id: string;
   title: string;
@@ -96,6 +94,23 @@ export function ProductRecommendations({
   }, [emblaApi]);
 
   useEffect(() => {
+    // Track impressions when recommendations are loaded
+    if (
+      products.length > 0 &&
+      typeof window !== "undefined" &&
+      window.dataLayer
+    ) {
+      window.dataLayer.push({
+        event: "view_recommendation_set",
+        recommendation_type: type,
+        products_shown: products.length,
+        source_product_id: productId,
+        product_ids: products.map((p) => p.id).join(","),
+      });
+    }
+  }, [products, type, productId]);
+
+  useEffect(() => {
     async function loadProducts() {
       setLoading(true);
       try {
@@ -173,7 +188,17 @@ export function ProductRecommendations({
             variant="outline"
             size="icon"
             className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-white/90 hover:bg-white"
-            onClick={() => emblaApi?.scrollPrev()}
+            onClick={() => {
+              emblaApi?.scrollPrev();
+
+              if (typeof window !== "undefined" && window.dataLayer) {
+                window.dataLayer.push({
+                  event: "recommendation_navigation",
+                  direction: "previous",
+                  recommendation_type: type,
+                });
+              }
+            }}
             disabled={!prevBtnEnabled}
           >
             <ChevronLeft className="h-4 w-4" />
@@ -182,7 +207,17 @@ export function ProductRecommendations({
             variant="outline"
             size="icon"
             className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-white/90 hover:bg-white"
-            onClick={() => emblaApi?.scrollNext()}
+            onClick={() => {
+              emblaApi?.scrollNext();
+
+              if (typeof window !== "undefined" && window.dataLayer) {
+                window.dataLayer.push({
+                  event: "recommendation_navigation",
+                  direction: "next",
+                  recommendation_type: type,
+                });
+              }
+            }}
             disabled={!nextBtnEnabled}
           >
             <ChevronRight className="h-4 w-4" />

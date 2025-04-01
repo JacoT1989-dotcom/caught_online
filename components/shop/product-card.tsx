@@ -14,8 +14,6 @@ import { CalendarRange, Percent, Plus, ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { trackAddToCart } from "@/lib/analytics";
-
-import { Button } from "../ui/button";
 import { AuthProvider } from "../auth/auth-provider";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -137,7 +135,6 @@ export function ProductCard({
 
       const loggedInCookie = getCookie("logged_in");
       isLoggedIn = loggedInCookie === "true";
-      console.log("Check 1 - Logged in cookie:", isLoggedIn);
 
       // Check 2: Look for user auth in localStorage (fallback)
       if (!isLoggedIn) {
@@ -145,18 +142,13 @@ export function ProductCard({
           (key) => key.includes("user-cart") || key.includes("Customer")
         );
         isLoggedIn = hasUserCart;
-        console.log("Check 2 - User cart in storage:", isLoggedIn);
       }
 
       // Check 3: Use the useAuth hook (fallback)
       if (!isLoggedIn) {
         isLoggedIn = !!user.accessToken;
-        console.log("Check 3 - useAuth accessToken:", isLoggedIn);
       }
-
-      console.log("Final authentication result:", isLoggedIn);
     } catch (error) {
-      console.error("Error checking authentication:", error);
       // Default to allowing the action in case of an error
       isLoggedIn = true;
     }
@@ -254,8 +246,8 @@ export function ProductCard({
                 {cartItem.subscription === "monthly"
                   ? "Monthly"
                   : cartItem.subscription === "bimonthly"
-                    ? "Every 2 Months"
-                    : "Every 3 Months"}
+                  ? "Every 2 Months"
+                  : "Every 3 Months"}
               </Badge>
             )}
           </div>

@@ -68,6 +68,14 @@ export function InfoMenu() {
   const handleMouseEnter = () => {
     if (timeoutId) clearTimeout(timeoutId);
     setIsOpen(true);
+
+    // Track menu open event
+    if (typeof window !== "undefined" && window.dataLayer) {
+      window.dataLayer.push({
+        event: "menu_open",
+        menu_name: "info_menu",
+      });
+    }
   };
 
   const handleMouseLeave = () => {
@@ -75,6 +83,15 @@ export function InfoMenu() {
       setIsOpen(false);
     }, 200);
     setTimeoutId(timeout);
+  };
+
+  // Track info link clicks with enhanced data
+  const handleInfoLinkClick = (item: (typeof infoLinks)[0], index: number) => {
+    trackLinkClick(item.title, item.href, {
+      category: "information",
+      section: "info_menu",
+      position: index + 1,
+    });
   };
 
   return (
@@ -95,7 +112,7 @@ export function InfoMenu() {
               onMouseLeave={handleMouseLeave}
             >
               <div className="grid gap-3">
-                {infoLinks.map((item) => {
+                {infoLinks.map((item, index) => {
                   const Icon = item.icon;
                   return (
                     <Link
@@ -105,12 +122,7 @@ export function InfoMenu() {
                         "flex items-center gap-4 rounded-md p-3",
                         "hover:bg-accent transition-colors"
                       )}
-                      onClick={() =>
-                        trackLinkClick(
-                          "Subscribe to newsletter",
-                          "mailto:sjuniversalpaint@gmail.com"
-                        )
-                      }
+                      onClick={() => handleInfoLinkClick(item, index)}
                     >
                       <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[#f6424a]/10">
                         <Icon

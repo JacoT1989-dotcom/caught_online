@@ -15,6 +15,7 @@ import { collections } from "@/lib/collections";
 import { cn } from "@/lib/utils";
 import { Fish, Grab as Crab, Cookie, Cigarette, Waves } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { trackLinkClick } from "@/lib/analytics";
 
 // Update Collection interface to include description property
 export interface Collection {
@@ -41,6 +42,14 @@ export function ShopMenu() {
   const handleMouseEnter = () => {
     if (timeoutId) clearTimeout(timeoutId);
     setOpen(true);
+    
+    // Track menu open event
+    if (typeof window !== "undefined" && window.dataLayer) {
+      window.dataLayer.push({
+        event: "menu_open",
+        menu_name: "shop_menu"
+      });
+    }
   };
 
   const handleMouseLeave = () => {
@@ -50,10 +59,58 @@ export function ShopMenu() {
     setTimeoutId(timeout);
   };
 
-  const handleLinkClick = (href: string) => {
+  const handleLinkClick = (href: string, collectionTitle: string, collectionId: string) => {
+    // Track collection click
+    trackLinkClick(collectionTitle, href, {
+      category: "collection",
+      section: "shop_menu",
+      position: collectionId
+    });
+    
     // Close the menu first
     setOpen(false);
+    
     // Add delay before navigation
+    setTimeout(() => {
+      router.push(href);
+    }, 200);
+  };
+
+  const handleAllProductsClick = () => {
+    // Track all products click
+    trackLinkClick("All Products", "/products", {
+      category: "collection",
+      section: "shop_menu",
+      position: "all_products"
+    });
+    
+    // Close the menu first
+    setOpen(false);
+    
+    // Add delay before navigation
+    setTimeout(() => {
+      router.push("/products");
+    }, 200);
+  };
+
+  const handleSubcollectionClick = (
+    href: string, 
+    collectionTitle: string, 
+    parentTitle: string, 
+    subcollectionId: string
+  ) => {
+    // Track subcollection click with parent context
+    trackLinkClick(collectionTitle, href, {
+      category: "subcollection",
+      section: "shop_menu",
+      position: subcollectionId,
+      parent_collection: parentTitle
+    });
+    
+    // Close the menu
+    setOpen(false);
+    
+    // Navigate
     setTimeout(() => {
       router.push(href);
     }, 200);
@@ -98,7 +155,7 @@ export function ShopMenu() {
                             "flex items-center gap-2 rounded-md p-3 text-sm font-medium",
                             "bg-accent/50 hover:bg-accent transition-colors cursor-pointer"
                           )}
-                          onClick={() => handleLinkClick("/products")}
+                          onClick={handleAllProductsClick}
                         >
                           <Fish className="h-5 w-5" />
                           <div>
@@ -126,7 +183,9 @@ export function ShopMenu() {
                                 )}
                                 onClick={() =>
                                   handleLinkClick(
-                                    `/products?collection=${collection.handle}`
+                                    `/products?collection=${collection.handle}`,
+                                    collection.title,
+                                    collection.id
                                   )
                                 }
                               >
@@ -158,8 +217,11 @@ export function ShopMenu() {
                                             "text-muted-foreground hover:text-foreground"
                                           )}
                                           onClick={() =>
-                                            handleLinkClick(
-                                              `/products?collection=${subcollection.handle}`
+                                            handleSubcollectionClick(
+                                              `/products?collection=${subcollection.handle}`,
+                                              subcollection.title,
+                                              collection.title,
+                                              subcollection.id
                                             )
                                           }
                                         >

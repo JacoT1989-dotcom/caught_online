@@ -9,6 +9,7 @@ import useEmblaCarousel from "embla-carousel-react";
 import { shopifyFetch } from "@/lib/shopify/client";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Button } from "../ui/button";
+import { trackSelectItem, trackLinkClick } from "@/lib/analytics";
 
 interface CategoryProduct {
   title: string;
@@ -109,6 +110,18 @@ export function ProductCategories() {
   const [loading, setLoading] = useState(true);
   const isMobile = useMediaQuery("(max-width: 768px)");
 
+  // Track section view when component mounts
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.dataLayer) {
+      window.dataLayer.push({
+        event: "view_category_section",
+        section_name: "Product Categories",
+        categories_count: categories.length,
+        device_type: isMobile ? "mobile" : "desktop",
+      });
+    }
+  }, [isMobile]);
+
   useEffect(() => {
     async function fetchCategoryImages() {
       try {
@@ -158,6 +171,46 @@ export function ProductCategories() {
     };
   }, [emblaApi]);
 
+  const handleCategoryClick = (category: Category, index: number) => {
+    // Track the category selection
+
+    trackSelectItem(
+      {
+        id: category.collection,
+        title: category.title,
+        price: 0, // No specific price for a category
+        variantId: undefined,
+        quantity: 1,
+      },
+      "Product Categories"
+    );
+
+    // Additionally, track as a link click with enhanced data
+    if (typeof window !== "undefined" && window.dataLayer) {
+      window.dataLayer.push({
+        event: "category_click",
+        category_name: category.title,
+        category_position: index + 1,
+        category_list: "Home Page Categories",
+        device_type: isMobile ? "mobile" : "desktop",
+      });
+    }
+  };
+
+  // Track carousel navigation on mobile
+  const handleCarouselNav = (index: number) => {
+    emblaApi?.scrollTo(index);
+
+    if (typeof window !== "undefined" && window.dataLayer) {
+      window.dataLayer.push({
+        event: "category_carousel_navigation",
+        previous_index: selectedIndex,
+        new_index: index,
+        category_name: categories[index].title,
+      });
+    }
+  };
+
   return (
     <section className="px-4 py-12">
       <div className="text-center mb-8">
@@ -171,11 +224,12 @@ export function ProductCategories() {
 
       {/* Desktop Grid - Hidden on Mobile */}
       <div className="hidden md:grid grid-cols-4 gap-4">
-        {categories.map((category) => (
+        {categories.map((category, index) => (
           <Link
             key={category.title}
             href={category.href}
             className="block group"
+            onClick={() => handleCategoryClick(category, index)}
           >
             <Card
               className={cn(
@@ -218,12 +272,16 @@ export function ProductCategories() {
       <div className="md:hidden relative">
         <div className="overflow-hidden" ref={emblaRef}>
           <div className="flex">
-            {categories.map((category) => (
+            {categories.map((category, index) => (
               <div
                 key={category.title}
                 className="flex-[0_0_85%] min-w-0 pl-4 first:pl-4"
               >
-                <Link href={category.href} className="block">
+                <Link
+                  href={category.href}
+                  className="block"
+                  onClick={() => handleCategoryClick(category, index)}
+                >
                   <Card
                     className={cn(
                       "overflow-hidden transition-all duration-300",
@@ -271,7 +329,7 @@ export function ProductCategories() {
                   ? "w-6 bg-[#41c8d2]"
                   : "w-1.5 bg-[#41c8d2]/20 hover:bg-[#41c8d2]/40"
               )}
-              onClick={() => emblaApi?.scrollTo(index)}
+              onClick={() => handleCarouselNav(index)}
             />
           ))}
         </div>

@@ -59,10 +59,17 @@ declare global {
     ShopifyAnalytics?: ShopifyAnalyticsType;
     ShopifyAnalyticsObject?: string;
     trackUserData?: () => void;
+    trackSubscription?: (plan: string, value: number) => void;
     trackFormSubmit?: (formData: { form_name: string }) => void;
     trackLinkClick?: (linkData: {
       link_name: string;
       link_url: string;
+      options?: {
+        category?: string;
+        section?: string;
+        position?: string | number;
+        parent_collection?: string;
+      };
     }) => void;
     Shopify?: {
       Shop?: {
@@ -122,6 +129,7 @@ export function initAnalytics(): string {
       
       // Initialize dataLayer for GTM
       window.dataLayer = window.dataLayer || [];
+      
       
       // Initialize GTM
       (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -759,27 +767,53 @@ export function trackSubscription(plan: string, value: number): void {
   }
 }
 
-export function trackLinkClick(linkName: string, linkUrl: string): void {
+export function trackLinkClick(
+  linkName: string,
+  linkUrl: string,
+  options?: {
+    category?: string;
+    section?: string;
+    position?: string | number;
+    parent_collection?: string;
+  }
+): void {
   if (typeof window === "undefined") return;
 
   try {
+    // Get current page path
+    const pagePath = window.location.pathname;
+
+    // Build enhanced data object
+    const enhancedData = {
+      link_name: linkName,
+      link_url: linkUrl,
+      page_path: pagePath,
+      ...(options?.category && { link_category: options.category }),
+      ...(options?.section && { page_section: options.section }),
+      ...(options?.position && { link_position: options.position }),
+    };
+
+    // Call existing function if available
     if (typeof window.trackLinkClick === "function") {
       window.trackLinkClick({
         link_name: linkName,
         link_url: linkUrl,
+        options: options,
       });
-    } else {
-      // Fallback implementation
-      if (window.dataLayer) {
-        window.dataLayer.push({
-          event: "link_click",
-          link_name: linkName,
-          link_url: linkUrl,
-        });
-      }
     }
 
-    debugLog("LinkClick", { link_name: linkName, link_url: linkUrl });
+    // Also push to dataLayer directly for enhanced data
+    if (window.dataLayer) {
+      window.dataLayer.push({
+        event: "link_click",
+        ...enhancedData,
+      });
+    }
+
+    // Debug logging
+    if (window.DEBUG_ANALYTICS) {
+      console.log("📊 Link Click tracked", enhancedData);
+    }
   } catch (error) {
     console.error("Failed to track link click:", error);
   }
@@ -813,6 +847,22 @@ export function trackUserData(): void {
   if (typeof window === "undefined") return;
 
   try {
+    // Get GA client ID from cookie
+    let clientId;
+    try {
+      // For GA4 (cookie name: _ga)
+      const gaCookie = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("_ga="));
+
+      clientId = gaCookie
+        ? gaCookie.split("=")[1].split(".").slice(-2).join(".")
+        : undefined;
+    } catch (e) {
+      console.warn("Could not extract GA client ID from cookie", e);
+      clientId = undefined;
+    }
+
     if (typeof window.trackUserData === "function") {
       window.trackUserData();
     } else {
@@ -820,15 +870,14 @@ export function trackUserData(): void {
       if (window.dataLayer) {
         window.dataLayer.push({
           event: "fetch_user_data",
-          cd_session_id: window.gtag?.apiResult?.session_id,
-          cd_client_id: window.gtag?.apiResult?.client_id,
+          cd_client_id: clientId,
+          user_authenticated: !!localStorage.getItem("auth-storage"),
         });
       }
     }
 
     debugLog("FetchUserData", {
-      cd_session_id: window.gtag?.apiResult?.session_id,
-      cd_client_id: window.gtag?.apiResult?.client_id,
+      cd_client_id: clientId,
     });
   } catch (error) {
     console.error("Failed to track user data:", error);

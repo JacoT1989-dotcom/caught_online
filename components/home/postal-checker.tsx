@@ -21,6 +21,13 @@ export function PostalChecker() {
   } = usePostalCode();
 
   const handleSubmit = (e: React.FormEvent) => {
+    if (typeof window !== "undefined" && window.dataLayer) {
+      window.dataLayer.push({
+        event: "postal_code_check",
+        postal_code: postalCode,
+      });
+    }
+
     e.preventDefault();
     checkDelivery();
   };
