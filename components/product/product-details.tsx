@@ -259,14 +259,28 @@ export function ProductDetails({ product }: ProductDetailsProps) {
       return;
     }
 
-    // Simple way to check authentication
+    // Improved authentication check with expiry validation
     let isLoggedIn = false;
     try {
       if (typeof window !== "undefined") {
         const authData = localStorage.getItem("auth-storage");
         if (authData) {
           const parsedData = JSON.parse(authData);
-          isLoggedIn = !!parsedData?.state?.accessToken;
+
+          // Check for access token AND if it's not expired
+          if (parsedData?.state?.accessToken) {
+            // Check if token is expired
+            const expiresAt = parsedData?.state?.expiresAt;
+            if (expiresAt) {
+              const now = new Date();
+              const expiry = new Date(expiresAt);
+              isLoggedIn = now < expiry;
+            } else {
+              // If no expiry is found but token exists, assume logged in
+              // This is a fallback but should be rare
+              isLoggedIn = true;
+            }
+          }
         }
       }
     } catch (error) {
@@ -292,7 +306,6 @@ export function ProductDetails({ product }: ProductDetailsProps) {
       setTimeout(() => {
         window.location.href = "/login";
       }, 2000);
-
       return;
     }
 
@@ -370,7 +383,6 @@ export function ProductDetails({ product }: ProductDetailsProps) {
             error instanceof Error ? error.message : "Unknown error",
         });
       }
-
       toast.error("Error adding to cart. Please try again.");
     }
   };

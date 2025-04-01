@@ -14,6 +14,8 @@ import { CalendarRange, Percent, Plus, ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { trackAddToCart } from "@/lib/analytics";
+
+import { Button } from "../ui/button";
 import { AuthProvider } from "../auth/auth-provider";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -62,7 +64,7 @@ export function ProductCard({
   searchParams = {},
   forceSubscription = false,
 }: ProductCardProps) {
-  const user = useAuth();
+  const { accessToken } = useAuth();
   const [isHovered, setIsHovered] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const { items, addItem } = useCart();
@@ -115,56 +117,56 @@ export function ProductCard({
     e.preventDefault();
     e.stopPropagation();
 
+    // Check if product is available first
     if (!isAvailable) return;
 
-    // Try multiple authentication checks
+    // Improved authentication check
     let isLoggedIn = false;
-
     try {
-      // Check 1: Look for the logged_in cookie
-      const getCookie = (name: string): string | null => {
-        const cookies = document.cookie.split(";");
-        for (let i = 0; i < cookies.length; i++) {
-          const cookie = cookies[i].trim();
-          if (cookie.startsWith(name + "=")) {
-            return cookie.substring(name.length + 1);
+      if (typeof window !== "undefined") {
+        const authData = localStorage.getItem("auth-storage");
+        if (authData) {
+          const parsedData = JSON.parse(authData);
+
+          // Check for access token AND if it's not expired
+          if (parsedData?.state?.accessToken) {
+            // Check if token is expired
+            const expiresAt = parsedData?.state?.expiresAt;
+            if (expiresAt) {
+              const now = new Date();
+              const expiry = new Date(expiresAt);
+              isLoggedIn = now < expiry;
+            }
           }
         }
-        return null;
-      };
-
-      const loggedInCookie = getCookie("logged_in");
-      isLoggedIn = loggedInCookie === "true";
-
-      // Check 2: Look for user auth in localStorage (fallback)
-      if (!isLoggedIn) {
-        const hasUserCart = Object.keys(localStorage).some(
-          (key) => key.includes("user-cart") || key.includes("Customer")
-        );
-        isLoggedIn = hasUserCart;
-      }
-
-      // Check 3: Use the useAuth hook (fallback)
-      if (!isLoggedIn) {
-        isLoggedIn = !!user.accessToken;
       }
     } catch (error) {
-      // Default to allowing the action in case of an error
-      isLoggedIn = true;
+      console.error("Error checking auth state:", error);
+      isLoggedIn = false;
     }
 
-    // If user is not authenticated, show login message and redirect
+    // If not logged in, show error message and redirect
     if (!isLoggedIn) {
       toast.error("Please log in to add items to cart");
 
+      // Track the failed add to cart attempt due to authentication
+      if (typeof window !== "undefined" && window.dataLayer) {
+        window.dataLayer.push({
+          event: "add_to_cart_failed",
+          reason: "authentication_required",
+          product_id: product.id,
+          product_name: product.title,
+        });
+      }
+
+      // Navigate to login after a brief delay
       setTimeout(() => {
         window.location.href = "/login";
       }, 2000);
-
       return;
     }
 
-    // User is authenticated, proceed with adding to cart
+    // User is authenticated, add item to cart
     const item = {
       id: product.id,
       variantId: variant?.id || product.id,
@@ -187,9 +189,18 @@ export function ProductCard({
       quantity: 1,
     });
 
-    toast.success(`${product.title} added to cart`, {
-      duration: 2000,
-    });
+    if (!shouldShowSubscriptionPrice) {
+      toast(
+        <div className="relative">{"Save up to 10% by subscribing."}</div>,
+        {
+          duration: 2000,
+        }
+      );
+    } else {
+      toast.success(`${product.title} added to cart`, {
+        duration: 2000,
+      });
+    }
   };
 
   return (
