@@ -290,7 +290,7 @@ export function ProductDetails({ product }: ProductDetailsProps) {
 
     // If not logged in, show simple error message and redirect
     if (!isLoggedIn) {
-      toast.error("Please log in to add items to cart");
+      toast.error("Please login to add items to cart");
 
       // Track the failed add to cart attempt due to authentication
       if (typeof window !== "undefined" && window.dataLayer) {
