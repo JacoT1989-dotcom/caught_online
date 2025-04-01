@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import { trackAddToCart } from "@/lib/analytics";
 
 import { Button } from "../ui/button";
+import { AuthProvider } from "../auth/auth-provider";
+import { useAuth } from "@/hooks/use-auth";
 
 interface ProductCardProps {
   product: {
@@ -62,6 +64,7 @@ export function ProductCard({
   searchParams = {},
   forceSubscription = false,
 }: ProductCardProps) {
+  const { accessToken } = useAuth();
   const [isHovered, setIsHovered] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const { items, addItem } = useCart();
@@ -109,13 +112,61 @@ export function ProductCard({
   };
 
   const discountPercentage = isClient ? getDiscountPercentage() : null;
-
+  // For ProductCard.tsx
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
+    // Check if product is available first
     if (!isAvailable) return;
 
+    // Improved authentication check
+    let isLoggedIn = false;
+    try {
+      if (typeof window !== "undefined") {
+        const authData = localStorage.getItem("auth-storage");
+        if (authData) {
+          const parsedData = JSON.parse(authData);
+
+          // Check for access token AND if it's not expired
+          if (parsedData?.state?.accessToken) {
+            // Check if token is expired
+            const expiresAt = parsedData?.state?.expiresAt;
+            if (expiresAt) {
+              const now = new Date();
+              const expiry = new Date(expiresAt);
+              isLoggedIn = now < expiry;
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error checking auth state:", error);
+      isLoggedIn = false;
+    }
+
+    // If not logged in, show error message and redirect
+    if (!isLoggedIn) {
+      toast.error("Please login to add items to cart");
+
+      // Track the failed add to cart attempt due to authentication
+      if (typeof window !== "undefined" && window.dataLayer) {
+        window.dataLayer.push({
+          event: "add_to_cart_failed",
+          reason: "authentication_required",
+          product_id: product.id,
+          product_name: product.title,
+        });
+      }
+
+      // Navigate to login after a brief delay
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 2000);
+      return;
+    }
+
+    // User is authenticated, add item to cart
     const item = {
       id: product.id,
       variantId: variant?.id || product.id,
@@ -138,11 +189,13 @@ export function ProductCard({
       quantity: 1,
     });
 
-    // Show subscription upsell only for one-time purchases
     if (!shouldShowSubscriptionPrice) {
-      toast(<div className="relative">{/* Toast content... */}</div>, {
-        duration: 2000,
-      });
+      toast(
+        <div className="relative">{"Save up to 10% by subscribing."}</div>,
+        {
+          duration: 2000,
+        }
+      );
     } else {
       toast.success(`${product.title} added to cart`, {
         duration: 2000,
@@ -204,8 +257,8 @@ export function ProductCard({
                 {cartItem.subscription === "monthly"
                   ? "Monthly"
                   : cartItem.subscription === "bimonthly"
-                    ? "Every 2 Months"
-                    : "Every 3 Months"}
+                  ? "Every 2 Months"
+                  : "Every 3 Months"}
               </Badge>
             )}
           </div>

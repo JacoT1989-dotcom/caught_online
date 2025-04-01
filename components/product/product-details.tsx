@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -33,8 +32,15 @@ import {
 } from "@/components/ui/select";
 import type { SubscriptionInterval } from "@/lib/types/subscription";
 import { DeliverySection } from "@/components/product/delivery/delivery-section";
-import { trackAddToCart } from "@/lib/analytics";
+import {
+  trackAddToCart,
+  trackSubscription,
+  trackSelectItem,
+} from "@/lib/analytics";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
+import Link from "next/link";
+import Image from "next/image";
 
 const infoSections = [
   {
@@ -118,6 +124,8 @@ export function ProductDetails({ product }: ProductDetailsProps) {
   const { loading, isAvailable, quantity, checkProductInventory } =
     useInventory();
 
+  const user = useAuth();
+
   // Add state for active image
   const [activeImageUrl, setActiveImageUrl] = useState<string>(
     product.featuredImage.url
@@ -160,7 +168,6 @@ export function ProductDetails({ product }: ProductDetailsProps) {
 
   // Handle missing price - this is now done after all hooks are called
   if (!price) {
-    console.error("No price found for product:", product.title);
     return (
       <div className="text-red-500">
         Product pricing information unavailable
@@ -234,21 +241,17 @@ export function ProductDetails({ product }: ProductDetailsProps) {
   function getVariantId(
     product: ProductDetailsProps["product"],
     selectedWeight: string
-  ) {
-    if (!selectedWeight) return null;
+  ): string | undefined {
+    // Change return type
+    if (!selectedWeight) return undefined; // Return undefined instead of null
 
     const variants = product.variants?.edges || [];
     const variant = variants.find(
       ({ node }) => node?.title && node.title.includes(selectedWeight)
     );
 
-    return variant ? variant.node.id : null;
+    return variant ? variant.node.id : undefined; // Return undefined instead of null
   }
-
-  // Function to handle quantity changes
-  const handleQuantityChange = (newQuantity: number) => {
-    setLocalQuantity(Math.max(1, newQuantity));
-  };
 
   const handleAddToCart = () => {
     if (!selectedRegion) {
@@ -256,34 +259,229 @@ export function ProductDetails({ product }: ProductDetailsProps) {
       return;
     }
 
+    // Improved authentication check with expiry validation
+    let isLoggedIn = false;
     try {
+      if (typeof window !== "undefined") {
+        const authData = localStorage.getItem("auth-storage");
+        if (authData) {
+          const parsedData = JSON.parse(authData);
+
+          // Check for access token AND if it's not expired
+          if (parsedData?.state?.accessToken) {
+            // Check if token is expired
+            const expiresAt = parsedData?.state?.expiresAt;
+            if (expiresAt) {
+              const now = new Date();
+              const expiry = new Date(expiresAt);
+              isLoggedIn = now < expiry;
+            } else {
+              // If no expiry is found but token exists, assume logged in
+              // This is a fallback but should be rare
+              isLoggedIn = true;
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error checking auth state:", error);
+      isLoggedIn = false;
+    }
+
+    // If not logged in, show simple error message and redirect
+    if (!isLoggedIn) {
+      toast.error("Please login to add items to cart");
+
+      // Track the failed add to cart attempt due to authentication
+      if (typeof window !== "undefined" && window.dataLayer) {
+        window.dataLayer.push({
+          event: "add_to_cart_failed",
+          reason: "authentication_required",
+          product_id: product.id,
+          product_name: product.title,
+        });
+      }
+
+      // Navigate to login after a brief delay
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 2000);
+      return;
+    }
+
+    try {
+      // Prepare the analytics data
+      const analyticsData = {
+        id: product.id,
+        title: `${product.title}${
+          selectedWeight ? ` - ${selectedWeight}` : ""
+        }`,
+        price: finalPrice,
+        originalPrice: regularPrice,
+        variantId: variantId || undefined, // Add || undefined here
+        quantity: localQuantity,
+        // Include subscription information if applicable
+        ...(shouldShowSubscriptionPrice && {
+          subscription: true,
+          subscription_interval: subscriptionInterval,
+          discount_percentage: (selectedPlan?.discount || 0) * 100,
+        }),
+      };
+
+      // User is logged in, add to cart
       addItem({
         id: product.id,
         variantId: variantId,
-        title: `${product.title}${selectedWeight ? ` - ${selectedWeight}` : ""}`,
+        title: `${product.title}${
+          selectedWeight ? ` - ${selectedWeight}` : ""
+        }`,
         price: finalPrice,
         originalPrice: shouldShowSubscriptionPrice ? regularPrice : undefined,
         image: product.featuredImage.url,
-        quantity: localQuantity, // Use the local quantity state
+        quantity: localQuantity,
         subscription: shouldShowSubscriptionPrice
           ? subscriptionInterval
           : undefined,
       });
 
-      trackAddToCart({
-        id: product.id,
-        title: product.title,
-        price: finalPrice,
-        variantId: variantId,
-        quantity: localQuantity, // Use the local quantity state
-      });
+      // Track the add to cart event with enhanced data
+      trackAddToCart(analyticsData);
+
+      // If this is a subscription purchase, also track it as a subscription event
+      if (shouldShowSubscriptionPrice && typeof window !== "undefined") {
+        // Import the trackSubscription function if it's available
+        if (typeof window.trackSubscription === "function") {
+          window.trackSubscription(
+            `${subscriptionInterval}-subscription`,
+            finalPrice * localQuantity
+          );
+        } else if (window.dataLayer) {
+          // Fallback if trackSubscription isn't available
+          window.dataLayer.push({
+            event: "start_subscription",
+            subscription: {
+              plan_type: subscriptionInterval,
+              value: finalPrice * localQuantity,
+              currency: "ZAR",
+            },
+          });
+        }
+      }
 
       toast.success(`${localQuantity}x ${product.title} added to cart`, {
         duration: 2000,
       });
     } catch (error) {
-      console.error("Error adding to cart:", error);
+      // Track the failed add to cart attempt
+      if (typeof window !== "undefined" && window.dataLayer) {
+        window.dataLayer.push({
+          event: "add_to_cart_failed",
+          reason: "error",
+          product_id: product.id,
+          product_name: product.title,
+          error_message:
+            error instanceof Error ? error.message : "Unknown error",
+        });
+      }
+      toast.error("Error adding to cart. Please try again.");
     }
+  };
+
+  // 1. Track when users select different weights
+  const handleWeightChange = (weight: string) => {
+    setSelectedWeight(weight);
+
+    // Track selection of different product variants
+    trackSelectItem(
+      {
+        id: getVariantId(product, weight) || product.id,
+        title: `${product.title} - ${weight}`,
+        price: getWeightVariantPrice(weight),
+        variantId: getVariantId(product, weight) || undefined, // Add || undefined
+        quantity: localQuantity,
+      },
+      "Weight Options"
+    );
+  };
+  // 2. Track when users select purchase type (onetime vs subscription)
+  const handlePurchaseTypeChange = (type: "onetime" | "subscription") => {
+    setPurchaseType(type);
+
+    // When purchase type changes, track it
+    if (type === "subscription") {
+      trackSelectItem(
+        {
+          id: subscriptionVariantIds[subscriptionInterval] || product.id,
+          title: `${product.title} - Subscription`,
+          price:
+            regularPrice *
+            (1 - (SUBSCRIPTION_PLANS[subscriptionInterval]?.discount || 0)),
+          variantId: subscriptionVariantIds[subscriptionInterval] || undefined, // Add || undefined
+          quantity: localQuantity,
+        },
+        "Purchase Type"
+      );
+    } else {
+      trackSelectItem(
+        {
+          id: product.id,
+          title: `${product.title} - One-time purchase`,
+          price: regularPrice,
+          variantId: variantId || undefined, // Add || undefined
+          quantity: localQuantity,
+        },
+        "Purchase Type"
+      );
+    }
+  };
+
+  // . Track when users select different subscription intervals
+  const handleSubscriptionIntervalChange = (interval: SubscriptionInterval) => {
+    setSubscriptionInterval(interval);
+
+    // Track change of subscription interval
+    trackSelectItem(
+      {
+        id: subscriptionVariantIds[interval] || product.id,
+        title: `${product.title} - ${interval} subscription`,
+        price:
+          regularPrice * (1 - (SUBSCRIPTION_PLANS[interval]?.discount || 0)),
+        variantId: subscriptionVariantIds[interval] || undefined, // Add || undefined
+        quantity: localQuantity,
+      },
+      "Subscription Interval"
+    );
+  };
+
+  // . Track when quantity changes
+  const handleQuantityChange = (newQuantity: number) => {
+    // Update local quantity state
+    setLocalQuantity(Math.max(1, newQuantity));
+
+    // Only track if quantity actually changes (avoiding tracking when component mounts)
+    if (localQuantity !== newQuantity && newQuantity > 0) {
+      trackSelectItem(
+        {
+          id: variantId || product.id,
+          title: `${product.title}${
+            selectedWeight ? ` - ${selectedWeight}` : ""
+          }`,
+          price: finalPrice,
+          variantId: variantId || undefined, // Add || undefined
+          quantity: newQuantity,
+        },
+        "Quantity Update"
+      );
+    }
+  };
+
+  // Function to get price for specific weight variant
+  const getWeightVariantPrice = (weight: string): number => {
+    if (hasWeightVariants && weight) {
+      const variant = weightVariants.find((v) => v.weight === weight);
+      return variant ? parseFloat(variant.price) : parseFloat(price.amount);
+    }
+    return parseFloat(price.amount);
   };
 
   const baseProductId = product.id;
@@ -291,8 +489,6 @@ export function ProductDetails({ product }: ProductDetailsProps) {
   const getSubscriptionVariantIds = (
     product: ProductDetailsProps["product"]
   ) => {
-    console.log("Finding subscription variants for product:", product.title);
-
     // Find variants with subscription options
     const variants = product.variants?.edges || [];
 
@@ -302,16 +498,6 @@ export function ProductDetails({ product }: ProductDetailsProps) {
       bimonthly: "",
       quarterly: "",
     };
-
-    // Log all variants to see what we're working with
-    console.log(
-      "All variants:",
-      variants.map((v) => ({
-        id: v.node.id,
-        title: v.node.title,
-        price: v.node.price?.amount,
-      }))
-    );
 
     // Try to find variants based on their titles or options
     variants.forEach(({ node }) => {
@@ -326,12 +512,6 @@ export function ProductDetails({ product }: ProductDetailsProps) {
           !title.includes("two") &&
           !title.includes("three")
         ) {
-          console.log(
-            "Found monthly variant:",
-            node.id,
-            "with price:",
-            node.price?.amount
-          );
           variantIds.monthly = node.id;
         } else if (
           title.includes("2 month") ||
@@ -339,12 +519,6 @@ export function ProductDetails({ product }: ProductDetailsProps) {
           title.includes("bi") ||
           title.includes("two month")
         ) {
-          console.log(
-            "Found bimonthly variant:",
-            node.id,
-            "with price:",
-            node.price?.amount
-          );
           variantIds.bimonthly = node.id;
         } else if (
           title.includes("3 month") ||
@@ -352,12 +526,6 @@ export function ProductDetails({ product }: ProductDetailsProps) {
           title.includes("quarter") ||
           title.includes("three month")
         ) {
-          console.log(
-            "Found quarterly variant:",
-            node.id,
-            "with price:",
-            node.price?.amount
-          );
           variantIds.quarterly = node.id;
         }
       }
@@ -377,19 +545,16 @@ export function ProductDetails({ product }: ProductDetailsProps) {
         const price = node.price?.amount;
 
         if (price === expectedPrices.monthly && !variantIds.monthly) {
-          console.log("Found monthly variant by price:", node.id);
           variantIds.monthly = node.id;
         } else if (
           price === expectedPrices.bimonthly &&
           !variantIds.bimonthly
         ) {
-          console.log("Found bimonthly variant by price:", node.id);
           variantIds.bimonthly = node.id;
         } else if (
           price === expectedPrices.quarterly &&
           !variantIds.quarterly
         ) {
-          console.log("Found quarterly variant by price:", node.id);
           variantIds.quarterly = node.id;
         }
       });
@@ -398,17 +563,12 @@ export function ProductDetails({ product }: ProductDetailsProps) {
     // Fallback to using the main variant ID if no subscription variants found
     if (!variantIds.monthly && variants.length > 0) {
       const defaultVariantId = variants[0].node.id;
-      console.log(
-        "No specific subscription variants found, using default variant:",
-        defaultVariantId
-      );
 
       variantIds.monthly = defaultVariantId;
       variantIds.bimonthly = defaultVariantId;
       variantIds.quarterly = defaultVariantId;
     }
 
-    console.log("Final subscription variant IDs:", variantIds);
     return variantIds;
   };
 
@@ -422,10 +582,12 @@ export function ProductDetails({ product }: ProductDetailsProps) {
         {/* Images */}
         <div className="space-y-4">
           <div className="relative aspect-square">
-            <img
+            <Image
               src={activeImageUrl}
               alt={product.featuredImage.altText || product.title}
+              fill
               className="w-full h-full object-cover rounded-lg"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
             {isSubscribed && (
               <Badge className="absolute top-2 right-2 flex items-center gap-1.5 bg-white text-[#f6424a] border border-[#f6424a]/20 shadow-sm">
@@ -433,8 +595,8 @@ export function ProductDetails({ product }: ProductDetailsProps) {
                 {isSubscribed === "monthly"
                   ? "Monthly"
                   : isSubscribed === "bimonthly"
-                    ? "Every 2 Months"
-                    : "Every 3 Months"}
+                  ? "Every 2 Months"
+                  : "Every 3 Months"}
               </Badge>
             )}
           </div>
@@ -451,10 +613,12 @@ export function ProductDetails({ product }: ProductDetailsProps) {
                   onClick={() => setActiveImageUrl(image.url)}
                   aria-label={`View ${image.altText || `image ${i + 1}`}`}
                 >
-                  <img
+                  <Image
                     src={image.url}
                     alt={image.altText || `${product.title} ${i + 1}`}
+                    fill
                     className="w-full h-full object-cover"
+                    sizes="(max-width: 768px) 100px, 50px"
                   />
                 </button>
               ))}
@@ -506,7 +670,7 @@ export function ProductDetails({ product }: ProductDetailsProps) {
           {hasWeightVariants && (
             <div className="space-y-2">
               <h3 className="font-medium">Weight</h3>
-              <Select value={selectedWeight} onValueChange={setSelectedWeight}>
+              <Select value={selectedWeight} onValueChange={handleWeightChange}>
                 <SelectTrigger className="w-full max-w-[200px]">
                   <SelectValue placeholder="Select weight" />
                 </SelectTrigger>
@@ -533,14 +697,15 @@ export function ProductDetails({ product }: ProductDetailsProps) {
             <SubscriptionOptions
               price={regularPrice}
               purchaseType={purchaseType}
-              onPurchaseTypeChange={setPurchaseType}
+              onPurchaseTypeChange={handlePurchaseTypeChange}
               subscriptionInterval={subscriptionInterval}
-              onSubscriptionIntervalChange={setSubscriptionInterval}
+              onSubscriptionIntervalChange={handleSubscriptionIntervalChange}
               onAddToCart={handleAddToCart}
               isAvailable={isAvailable}
-              productId={baseProductId} // Pass the base product ID
-              subscriptionVariantIds={subscriptionVariantIds} // Pass the variant IDs
-              quantity={localQuantity} // Pass the selected quantity
+              productId={baseProductId}
+              productTitle={product.title} // Add this prop
+              subscriptionVariantIds={subscriptionVariantIds}
+              quantity={localQuantity}
               useSubscriptionFlow={true}
             />
           )}

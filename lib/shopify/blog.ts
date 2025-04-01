@@ -3,17 +3,11 @@ import { GET_BLOG_POSTS, GET_BLOG_POST } from "./queries/blog";
 
 export async function getBlogPosts(first = 10) {
   try {
-    // Log the query being sent
-    console.log("Sending blog posts query:", GET_BLOG_POSTS);
-
     const { data, errors } = await shopifyFetch({
       query: GET_BLOG_POSTS,
       variables: { first },
       cache: "no-store",
     });
-
-    // Log the raw response
-    console.log("Raw blog API response:", { data, errors });
 
     if (errors?.length > 0) {
       console.error("GraphQL errors:", errors);
@@ -21,7 +15,6 @@ export async function getBlogPosts(first = 10) {
     }
 
     if (!data?.blog?.articles?.edges) {
-      console.log("No blog posts found in response");
       return [];
     }
 
@@ -47,9 +40,6 @@ export async function getBlogPosts(first = 10) {
       tags: node.tags || [],
     }));
 
-    // Log the processed posts
-    console.log("Processed blog posts:", posts);
-
     return posts;
   } catch (error) {
     console.error("Error fetching blog posts:", error);
@@ -70,18 +60,11 @@ export async function getBlogPost(handle: string) {
   }
 
   try {
-    // Log the query being sent
-    console.log("Sending blog post query:", GET_BLOG_POST);
-    console.log("Query variables:", { handle });
-
     const { data, errors } = await shopifyFetch({
       query: GET_BLOG_POST,
       variables: { handle },
       cache: "no-store",
     });
-
-    // Log the raw response
-    console.log("Raw blog post API response:", { data, errors });
 
     if (errors?.length > 0) {
       console.error("GraphQL errors:", errors);
@@ -90,7 +73,6 @@ export async function getBlogPost(handle: string) {
 
     const post = data?.blog?.articleByHandle;
     if (!post) {
-      console.log("Blog post not found:", handle);
       return null;
     }
 
@@ -115,9 +97,6 @@ export async function getBlogPost(handle: string) {
         : undefined,
       tags: post.tags || [],
     };
-
-    // Log the processed post
-    console.log("Processed blog post:", processedPost);
 
     return processedPost;
   } catch (error) {

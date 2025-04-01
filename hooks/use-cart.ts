@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { toast } from "sonner";
 
 // Update the CartItem interface to mark variantId as required
 export interface CartItem {
@@ -22,12 +23,11 @@ interface CartState {
 }
 
 interface CartStore extends CartState {
-  addItem: (item: CartItem) => void;
+  addItem: (item: CartItem) => boolean;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   setIsOpen: (open: boolean) => void;
   clearCart: () => void;
-  // New function to fix missing variant IDs
   ensureVariantIds: () => void;
 }
 
@@ -80,17 +80,11 @@ export const useCart = create<CartStore>()(
         set({
           items: itemsWithVariantIds,
         });
-
-        // console.log("Fixed variant IDs for cart items:", itemsWithVariantIds);
       },
 
       addItem: (item) => {
         // Ensure the item has a variant ID
         if (!item.variantId) {
-          console.warn(
-            "Item added without variant ID, deriving from product ID:",
-            item.title
-          );
           item = {
             ...item,
             variantId: getVariantIdFromProductId(item.id),
@@ -121,8 +115,7 @@ export const useCart = create<CartStore>()(
           });
         }
 
-        // Save to user-specific storage if logged in
-        saveCartToUserStorage(get());
+        return true; // Always return true
       },
 
       removeItem: (id) => {
@@ -132,8 +125,12 @@ export const useCart = create<CartStore>()(
           total: calculateTotal(filteredItems),
         });
 
-        // Save to user-specific storage if logged in
-        saveCartToUserStorage(get());
+        // Try to save to user-specific storage if logged in
+        try {
+          saveCartToUserStorage(get());
+        } catch (error) {
+          // Ignore errors
+        }
       },
 
       updateQuantity: (id, quantity) => {
@@ -151,8 +148,12 @@ export const useCart = create<CartStore>()(
           total: calculateTotal(updatedItems),
         });
 
-        // Save to user-specific storage if logged in
-        saveCartToUserStorage(get());
+        // Try to save to user-specific storage if logged in
+        try {
+          saveCartToUserStorage(get());
+        } catch (error) {
+          // Ignore errors
+        }
       },
 
       setIsOpen: (isOpen) => set({ isOpen }),
@@ -163,8 +164,12 @@ export const useCart = create<CartStore>()(
           total: 0,
         });
 
-        // Save empty cart to user-specific storage if logged in
-        saveCartToUserStorage({ items: [], isOpen: false, total: 0 });
+        // Try to save empty cart to user-specific storage if logged in
+        try {
+          saveCartToUserStorage({ items: [], isOpen: false, total: 0 });
+        } catch (error) {
+          // Ignore errors
+        }
       },
     }),
     {
@@ -172,7 +177,6 @@ export const useCart = create<CartStore>()(
       onRehydrateStorage: () => (state) => {
         // Fix variant IDs after rehydration
         if (state) {
-          // console.log("[Cart] Rehydrated from storage");
           // Schedule a fix for the next tick to ensure we have the full state
           setTimeout(() => {
             state.ensureVariantIds();
@@ -183,18 +187,22 @@ export const useCart = create<CartStore>()(
   )
 );
 
-// Helper functions for user-specific cart storage
-
-// Get the current user ID
+// Get current user identifier based on localStorage
 function getCurrentUserId(): string | null {
   try {
     if (typeof window === "undefined") return null;
 
-    const authData = localStorage.getItem("auth-storage");
-    if (!authData) return null;
+    // Look for user cart keys in localStorage
+    const keys = Object.keys(localStorage);
+    for (const key of keys) {
+      if (key.startsWith("user-cart-gid://shopify/Customer/")) {
+        // Extract the customer ID from the key
+        const customerId = key.replace("user-cart-gid://shopify/Customer/", "");
+        return customerId;
+      }
+    }
 
-    const parsedData = JSON.parse(authData);
-    return parsedData?.state?.user?.id || null;
+    return null;
   } catch (error) {
     console.error("Error getting user ID:", error);
     return null;
@@ -209,9 +217,8 @@ function saveCartToUserStorage(cartState: CartState): void {
     const userId = getCurrentUserId();
     if (!userId) return; // Don't save if not logged in
 
-    const storageKey = `user-cart-${userId}`;
+    let storageKey = `user-cart-gid://shopify/Customer/${userId}`;
     localStorage.setItem(storageKey, JSON.stringify(cartState));
-    // console.log(`[Cart] Saved to user storage: ${storageKey}`);
   } catch (error) {
     console.error("Error saving user cart:", error);
   }
@@ -225,14 +232,12 @@ export function loadUserCart(): CartState | null {
     const userId = getCurrentUserId();
     if (!userId) return null; // Return null if not logged in
 
-    const storageKey = `user-cart-${userId}`;
+    let storageKey = `user-cart-gid://shopify/Customer/${userId}`;
     const savedCart = localStorage.getItem(storageKey);
 
     if (!savedCart) return null;
 
     const parsedCart = JSON.parse(savedCart);
-    // console.log(`[Cart] Loaded from user storage: ${storageKey}`);
-
     return parsedCart;
   } catch (error) {
     console.error("Error loading user cart:", error);
@@ -247,8 +252,6 @@ export function clearCartOnLogout(): void {
 
     const cart = useCart.getState();
     cart.clearCart();
-
-    // console.log("[Cart] Cleared on logout");
   } catch (error) {
     console.error("Error clearing cart on logout:", error);
   }

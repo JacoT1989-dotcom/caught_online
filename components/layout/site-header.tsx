@@ -15,11 +15,69 @@ import { useCart } from "@/hooks/use-cart";
 import { RegionSelector } from "@/components/region/region-selector";
 import { ShopMenu } from "./shop-menu";
 import { InfoMenu } from "./info-menu";
+import { SearchModal } from "./SearchModal";
 import { cn } from "@/lib/utils";
+import { trackLinkClick } from "@/lib/analytics";
 
 export function SiteHeader() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  // Track when cart is opened
+  const handleOpenCart = () => {
+    setIsCartOpen(true);
+
+    // Track cart open event
+    if (typeof window !== "undefined" && window.dataLayer) {
+      window.dataLayer.push({
+        event: "open_cart",
+        source: "header",
+      });
+    }
+  };
+
+  // Track when mobile menu is opened
+  const handleOpenMobileMenu = () => {
+    setIsMobileMenuOpen(true);
+
+    // Track mobile menu open event
+    if (typeof window !== "undefined" && window.dataLayer) {
+      window.dataLayer.push({
+        event: "open_mobile_menu",
+        source: "header",
+      });
+    }
+  };
+
+  // Track when search is opened
+  const handleOpenSearch = () => {
+    setIsSearchOpen(true);
+
+    // Track search open event
+    if (typeof window !== "undefined" && window.dataLayer) {
+      window.dataLayer.push({
+        event: "open_search",
+        source: "header",
+      });
+    }
+  };
+
+  // Track navigation to homepage (logo click)
+  const handleLogoClick = () => {
+    trackLinkClick("Logo", "/", {
+      category: "navigation",
+      section: "header",
+    });
+  };
+
+  // Track navigation to account
+  const handleAccountClick = () => {
+    trackLinkClick("Account", "/account", {
+      category: "navigation",
+      section: "header",
+    });
+  };
 
   return (
     <header className="sticky top-4 z-50 max-w-[1400px] mx-auto">
@@ -30,6 +88,7 @@ export function SiteHeader() {
             <Link
               href="/"
               className="text-base sm:text-lg md:text-xl font-bold text-[#f6424a] whitespace-nowrap md:pl-4 mr-8"
+              onClick={handleLogoClick}
             >
               Caught Online<sup className="text-[0.6em] font-normal">®</sup>
             </Link>
@@ -41,12 +100,24 @@ export function SiteHeader() {
                 <Link
                   href="/subscription"
                   className="text-sm font-medium hover:text-[#f6424a] transition-colors"
+                  onClick={() =>
+                    trackLinkClick("Subscription", "/subscription", {
+                      category: "navigation",
+                      section: "header",
+                    })
+                  }
                 >
                   Subscription
                 </Link>
                 <Link
                   href="/blog"
                   className="text-sm font-medium hover:text-[#f6424a] transition-colors"
+                  onClick={() =>
+                    trackLinkClick("Recipes", "/blog", {
+                      category: "navigation",
+                      section: "header",
+                    })
+                  }
                 >
                   Recipes
                 </Link>
@@ -57,13 +128,19 @@ export function SiteHeader() {
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-2">
-            {/* Search - Both Mobile and Desktop */}
-            <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-              <Link href="/search">
-                <Search className="h-4 w-4" />
-                <span className="sr-only">Search</span>
-              </Link>
+            {/* Search Button - Opens Modal */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={handleOpenSearch}
+            >
+              <Search className="h-4 w-4" />
+              <span className="sr-only">Search</span>
             </Button>
+
+            {/* Search Modal */}
+            <SearchModal open={isSearchOpen} onOpenChange={setIsSearchOpen} />
 
             {/* Region Selector */}
             <RegionSelector />
@@ -71,7 +148,7 @@ export function SiteHeader() {
             {/* Account - Desktop Only */}
             <div className="hidden md:block">
               <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                <Link href="/account">
+                <Link href="/account" onClick={handleAccountClick}>
                   <User className="h-4 w-4" />
                   <span className="sr-only">Account</span>
                 </Link>
@@ -83,7 +160,7 @@ export function SiteHeader() {
               variant="ghost"
               size="icon"
               className="h-8 w-8 relative"
-              onClick={() => setIsCartOpen(true)}
+              onClick={handleOpenCart}
             >
               <ShoppingCart className="h-4 w-4" />
               <span className="sr-only">Cart</span>
@@ -97,7 +174,7 @@ export function SiteHeader() {
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 md:hidden"
-                onClick={() => setIsMobileMenuOpen(true)}
+                onClick={handleOpenMobileMenu}
               >
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Menu</span>
@@ -107,28 +184,100 @@ export function SiteHeader() {
                   <SheetTitle>Menu</SheetTitle>
                 </SheetHeader>
                 <nav className="flex flex-col space-y-4 mt-8">
-                  <Link href="/products" className="text-lg font-medium">
+                  <Link
+                    href="/products"
+                    className="text-lg font-medium"
+                    onClick={() =>
+                      trackLinkClick("Shop", "/products", {
+                        category: "navigation",
+                        section: "mobile_menu",
+                      })
+                    }
+                  >
                     Shop
                   </Link>
-                  <Link href="/subscription" className="text-lg font-medium">
+                  <Link
+                    href="/subscription"
+                    className="text-lg font-medium"
+                    onClick={() =>
+                      trackLinkClick("Subscription", "/subscription", {
+                        category: "navigation",
+                        section: "mobile_menu",
+                      })
+                    }
+                  >
                     Subscription
                   </Link>
-                  <Link href="/recipes" className="text-lg font-medium">
+                  <Link
+                    href="/recipes"
+                    className="text-lg font-medium"
+                    onClick={() =>
+                      trackLinkClick("Recipes", "/recipes", {
+                        category: "navigation",
+                        section: "mobile_menu",
+                      })
+                    }
+                  >
                     Recipes
                   </Link>
-                  <Link href="/about" className="text-lg font-medium">
+                  <Link
+                    href="/about"
+                    className="text-lg font-medium"
+                    onClick={() =>
+                      trackLinkClick("About Us", "/about", {
+                        category: "navigation",
+                        section: "mobile_menu",
+                      })
+                    }
+                  >
                     About Us
                   </Link>
-                  <Link href="/why-frozen" className="text-lg font-medium">
+                  <Link
+                    href="/why-frozen"
+                    className="text-lg font-medium"
+                    onClick={() =>
+                      trackLinkClick("Why Frozen", "/why-frozen", {
+                        category: "navigation",
+                        section: "mobile_menu",
+                      })
+                    }
+                  >
                     Why Frozen?
                   </Link>
-                  <Link href="/delivery" className="text-lg font-medium">
+                  <Link
+                    href="/delivery"
+                    className="text-lg font-medium"
+                    onClick={() =>
+                      trackLinkClick("Delivery Info", "/delivery", {
+                        category: "navigation",
+                        section: "mobile_menu",
+                      })
+                    }
+                  >
                     Delivery Info
                   </Link>
-                  <Link href="/sustainability" className="text-lg font-medium">
+                  <Link
+                    href="/sustainability"
+                    className="text-lg font-medium"
+                    onClick={() =>
+                      trackLinkClick("Sustainability", "/sustainability", {
+                        category: "navigation",
+                        section: "mobile_menu",
+                      })
+                    }
+                  >
                     Sustainability
                   </Link>
-                  <Link href="/contact" className="text-lg font-medium">
+                  <Link
+                    href="/contact"
+                    className="text-lg font-medium"
+                    onClick={() =>
+                      trackLinkClick("Contact", "/contact", {
+                        category: "navigation",
+                        section: "mobile_menu",
+                      })
+                    }
+                  >
                     Contact
                   </Link>
                 </nav>

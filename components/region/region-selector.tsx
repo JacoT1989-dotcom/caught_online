@@ -39,12 +39,31 @@ export function RegionSelector({
   const { selectedRegion, setRegion } = useRegion();
 
   useEffect(() => {
+    if (showDialog && typeof window !== "undefined" && window.dataLayer) {
+      window.dataLayer.push({
+        event: "open_region_selector",
+        source: "header"
+      });
+    }
+  }, [showDialog]);
+
+  useEffect(() => {
     if (forceOpen && !selectedRegion) {
       setShowDialog(true);
     }
   }, [forceOpen, selectedRegion]);
 
   const handleRegionSelect = (regionId: Region) => {
+
+    if (typeof window !== "undefined" && window.dataLayer) {
+      window.dataLayer.push({
+        event: "select_region",
+        region_id: regionId,
+        region_name: regions.find(r => r.id === regionId)?.name
+      });
+    }
+
+
     setRegion(regionId);
     setShowDialog(false);
   };

@@ -29,10 +29,9 @@ export default async function ProductPage({
   if (!params.handle) {
     notFound();
   }
-  // Add debug logging
-  console.log("Fetching product with handle:", params.handle);
+
   const product = await getProduct(params.handle);
-  console.log("Product data:", product);
+
   // If no product found, throw 404
   if (!product) {
     console.log("Product not found:", params.handle);

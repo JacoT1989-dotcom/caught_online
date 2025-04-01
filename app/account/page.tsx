@@ -19,6 +19,7 @@ import {
 import Image from "next/image";
 import { ProfileEditor } from "@/components/account/profile-editor";
 import { AddressEditor } from "@/components/account/address-editor";
+import SubscriptionManager from "@/components/home/subscription/subscriptionManagement";
 
 // TypeScript interfaces
 interface OrderLineItem {
@@ -219,16 +220,7 @@ export default function AccountPage() {
         </TabsContent>
 
         <TabsContent value="subscriptions">
-          {/* Ensure your SubscriptionManager component is typed properly */}
-          <div className="text-center py-12">
-            <CalendarRange className="h-12 w-12 mx-auto text-muted-foreground" />
-            <h3 className="mt-4 text-lg font-medium">
-              Subscription Management
-            </h3>
-            <p className="text-muted-foreground">
-              Manage your active subscriptions here.
-            </p>
-          </div>
+          <SubscriptionManager />
         </TabsContent>
 
         <TabsContent value="profile">

@@ -12,7 +12,6 @@ export async function syncCartWithShopify(
 ): Promise<boolean> {
   try {
     console.group("Shopify Cart Sync");
-    console.log("Items to sync:", items);
 
     // Step 1: Clear the Shopify cart
     const clearResponse = await fetch("/cart/clear.js", {
@@ -26,11 +25,8 @@ export async function syncCartWithShopify(
       return false;
     }
 
-    console.log("Shopify cart cleared");
-
     // If cart is empty, we're done
     if (items.length === 0) {
-      console.log("Cart synced with Shopify: Empty cart");
       console.groupEnd();
       return true;
     }
@@ -65,7 +61,6 @@ export async function syncCartWithShopify(
     const cartResponse = await fetch("/cart.js");
     const shopifyCart = await cartResponse.json();
 
-    console.log("Final Shopify cart state:", shopifyCart);
     console.groupEnd();
     return true;
   } catch (error) {

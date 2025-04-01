@@ -18,15 +18,6 @@ export async function shopifyFetch({
 
     const endpoint = `https://${SHOPIFY_CONFIG.domain}/api/${SHOPIFY_CONFIG.apiVersion}/graphql.json`;
 
-    // Log request details in development
-    if (process.env.NODE_ENV === "development") {
-      console.log("Shopify GraphQL Request:", {
-        endpoint,
-        query: query.slice(0, 100) + "...",
-        variables,
-      });
-    }
-
     const response = await fetch(endpoint, {
       method: "POST",
       headers: {

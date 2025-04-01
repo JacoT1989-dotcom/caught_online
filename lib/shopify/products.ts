@@ -210,6 +210,51 @@ const GET_PRODUCT_BY_HANDLE = `
   }
 `;
 
+// Enhanced search query for better fuzzy matching
+const ENHANCED_SEARCH_QUERY = `
+  query EnhancedSearch(
+    $query: String!,
+    $first: Int = 20,
+    $sortKey: ProductSortKeys = RELEVANCE
+  ) {
+    products(first: $first, sortKey: $sortKey, query: $query) {
+      edges {
+        node {
+          id
+          title
+          handle
+          description
+          availableForSale
+          productType
+          tags
+          featuredImage {
+            url
+            altText
+          }
+          priceRange {
+            minVariantPrice {
+              amount
+              currencyCode
+            }
+          }
+          variants(first: 1) {
+            edges {
+              node {
+                id
+                availableForSale
+                price {
+                  amount
+                  currencyCode
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
 export interface GetProductsOptions {
   query?: string;
   collection?: string;
@@ -244,13 +289,6 @@ export async function getProducts(options: GetProductsOptions = {}) {
   } = options;
 
   try {
-    // console.log("Fetching products with options:", {
-    //   collection,
-    //   query,
-    //   sortKey,
-    //   reverse,
-    // });
-
     // Use different queries for collection vs all products
     if (collection) {
       const { data } = await shopifyFetch({
@@ -328,15 +366,11 @@ export async function getProduct(handle: string) {
   }
 
   try {
-    // console.log("Fetching product with handle:", handle);
-
     const { data } = await shopifyFetch({
       query: GET_PRODUCT_BY_HANDLE,
       variables: { handle },
       // Remove cache: 'no-store' or use next: { revalidate: 3600 } for ISR
     });
-
-    // console.log("Raw product API response:", data);
 
     const product = data?.product;
     if (!product) {
@@ -363,8 +397,6 @@ export async function getProduct(handle: string) {
     return null;
   }
 }
-
-// Add these queries to your products.ts file
 
 const GET_PRODUCT_RECOMMENDATIONS_QUERY = `
   query GetProductRecommendations($productId: ID!) {
@@ -550,4 +582,72 @@ export async function getProductsByType(
     console.error(`Error fetching ${type} products:`, error);
     return [];
   }
+}
+
+/**
+ * Enhanced search function that improves fuzzy matching capabilities
+ * @param query Search query text
+ * @param limit Number of results to return
+ * @returns Array of product search results
+ */
+export async function enhancedProductSearch(query: string, limit: number = 20) {
+  if (!query.trim()) {
+    return [];
+  }
+
+  try {
+    // Process the search query to handle multiple terms and improve fuzzy matching
+    const processedQuery = processSearchQuery(query);
+
+    const { data } = await shopifyFetch({
+      query: ENHANCED_SEARCH_QUERY,
+      variables: {
+        query: processedQuery,
+        first: limit,
+        sortKey: "RELEVANCE",
+      },
+      cache: "no-store", // Don't cache search results
+    });
+
+    if (!data?.products?.edges) {
+      return [];
+    }
+
+    return data.products.edges.map(({ node }: any) => ({
+      id: node.id,
+      title: node.title,
+      handle: node.handle,
+      description: node.description,
+      availableForSale: node.availableForSale,
+      productType: node.productType,
+      tags: node.tags,
+      featuredImage: node.featuredImage,
+      priceRange: node.priceRange,
+      variants: node.variants,
+    }));
+  } catch (error) {
+    console.error("Error in enhanced product search:", error);
+    return [];
+  }
+}
+
+/**
+ * Process search query for better fuzzy matching
+ * This improves results for typos, misspellings, and partial matches
+ */
+function processSearchQuery(query: string): string {
+  // Split query into individual terms
+  const terms = query
+    .toLowerCase()
+    .split(" ")
+    .filter((term) => term.trim().length > 0);
+
+  // Create an array of processed terms
+  const processedTerms = terms.map((term) => {
+    // Use wildcard for partial matching on each term
+    return `*${term}*`;
+  });
+
+  // Join terms with OR operator for fuzzy matching
+  return processedTerms.join(" OR ");
 }

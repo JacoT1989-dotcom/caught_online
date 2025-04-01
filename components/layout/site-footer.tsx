@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { trackLinkClick } from "@/lib/analytics";
+import { NewsletterForm } from "@/components/news-letter-with-tracking/Newsletterform";
+import { useEffect } from "react";
 
 const footerLinks = {
   company: [
@@ -53,6 +55,62 @@ const paymentMethods = [
 ];
 
 export function SiteFooter() {
+  // Track footer visibility
+  useEffect(() => {
+    const trackFooterVisibility = () => {
+      const footerElement = document.querySelector("footer");
+
+      if (!footerElement) return;
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (
+              entry.isIntersecting &&
+              typeof window !== "undefined" &&
+              window.dataLayer
+            ) {
+              window.dataLayer.push({
+                event: "footer_visible",
+                page_location: window.location.pathname,
+              });
+              // Only need to track once
+              observer.disconnect();
+            }
+          });
+        },
+        { threshold: 0.5 }
+      );
+
+      observer.observe(footerElement);
+
+      return () => observer.disconnect();
+    };
+
+    // Set a small timeout to ensure the DOM is fully loaded
+    const timeout = setTimeout(trackFooterVisibility, 1000);
+    return () => clearTimeout(timeout);
+  }, []);
+
+  // Track link click with enhanced data
+  const handleLinkClick = (
+    label: string,
+    href: string,
+    category: "company" | "service" | "social"
+  ) => {
+    trackLinkClick(label, href);
+
+    // Push additional data to dataLayer
+    if (typeof window !== "undefined" && window.dataLayer) {
+      window.dataLayer.push({
+        event: "footer_link_click",
+        link_category: category,
+        link_label: label,
+        link_url: href,
+      });
+    }
+  };
+
   return (
     <footer>
       {/* Desktop Footer */}
@@ -78,6 +136,7 @@ export function SiteFooter() {
                     className="text-white/70 hover:text-white transition-colors"
                     aria-label={name}
                     title={`Visit our ${name} page`}
+                    onClick={() => handleLinkClick(name, href, "social")}
                   >
                     <Icon className="h-5 w-5" aria-hidden="true" />
                     <span className="sr-only">Visit our {name} page</span>
@@ -97,6 +156,7 @@ export function SiteFooter() {
                     <Link
                       href={href}
                       className="text-sm text-white/90 dark:text-white/80 hover:text-white transition-colors"
+                      onClick={() => handleLinkClick(label, href, "company")}
                     >
                       {label}
                     </Link>
@@ -116,12 +176,7 @@ export function SiteFooter() {
                     <Link
                       href={href}
                       className="text-sm text-white/90 dark:text-white/80 hover:text-white transition-colors"
-                      onClick={() =>
-                        trackLinkClick(
-                          "Customer Support Email",
-                          "mailto:gareth@caughtonline.co.za"
-                        )
-                      }
+                      onClick={() => handleLinkClick(label, href, "service")}
                     >
                       {label}
                     </Link>
@@ -138,29 +193,7 @@ export function SiteFooter() {
               <p className="text-sm text-white/90 dark:text-white/80">
                 Subscribe to our newsletter for exclusive offers and updates.
               </p>
-              <div className="flex gap-2">
-                <Input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="max-w-[240px] bg-white/10 border-white/20 text-white placeholder:text-white/60"
-                  aria-label="Email address for newsletter"
-                />
-                <Button
-                  variant="default"
-                  size="icon"
-                  className="bg-white text-[#41c8d2] hover:bg-white/90"
-                  aria-label="Subscribe to newsletter"
-                  onClick={() =>
-                    trackLinkClick(
-                      "Subscribe to newsletter",
-                      "mailto:gareth@caughtonline.co.za"
-                    )
-                  }
-                >
-                  <Mail className="h-4 w-4" aria-hidden="true" />
-                  <span className="sr-only">Subscribe</span>
-                </Button>
-              </div>
+              <NewsletterForm />
             </div>
           </div>
 
@@ -190,8 +223,7 @@ export function SiteFooter() {
                 className="text-white hover:bg-white/20"
               />
               <p className="text-sm text-white/90 dark:text-white/80">
-                © {new Date().getFullYear()} Caught Online. All rights
-                reserved.
+                © {new Date().getFullYear()} Caught Online. All rights reserved.
               </p>
             </div>
           </div>
@@ -211,7 +243,7 @@ export function SiteFooter() {
             </p>
             <div className="flex justify-center gap-6">
               {socialLinks.map(({ icon: Icon, href, name }) => (
-                <a
+                <Link
                   key={href}
                   href={href}
                   target="_blank"
@@ -219,38 +251,18 @@ export function SiteFooter() {
                   className="text-white/70 hover:text-white transition-colors"
                   aria-label={name}
                   title={`Visit our ${name} page`}
+                  onClick={() => handleLinkClick(name, href, "social")}
                 >
                   <Icon className="h-5 w-5" aria-hidden="true" />
                   <span className="sr-only">Visit our {name} page</span>
-                </a>
+                </Link>
               ))}
             </div>
           </div>
 
           {/* Newsletter */}
           <div className="space-y-3">
-            <div className="flex gap-2">
-              <Input
-                type="email"
-                placeholder="Enter your email for updates"
-                className="h-10 bg-white/10 border-white/20 text-white placeholder:text-white/60"
-                aria-label="Email address for newsletter"
-              />
-              <Button
-                size="sm"
-                className="h-10 bg-white text-[#41c8d2] hover:bg-white/90"
-                aria-label="Subscribe to newsletter"
-                onClick={() =>
-                  trackLinkClick(
-                    "Subscribe to newsletter",
-                    "mailto:gareth@caughtonline.co.za"
-                  )
-                }
-              >
-                <span className="sr-only">Subscribe</span>
-                <Mail className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            </div>
+            <NewsletterForm />
           </div>
 
           {/* Payment Methods & Copyright */}
@@ -277,8 +289,7 @@ export function SiteFooter() {
                 className="text-white hover:bg-white/20"
               />
               <p className="text-sm text-white/90 dark:text-white/80">
-                © {new Date().getFullYear()} Caught Online. All rights
-                reserved.
+                © {new Date().getFullYear()} Caught Online. All rights reserved.
               </p>
             </div>
           </div>

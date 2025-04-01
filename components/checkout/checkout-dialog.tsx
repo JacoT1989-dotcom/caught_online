@@ -22,11 +22,11 @@ import { trackFormSubmit } from "@/lib/analytics";
 
 // Delivery fee constants based on regions
 const DELIVERY_FEES: Record<Region | "default", number> = {
-  "cape-town": 60,
-  johannesburg: 70,
-  pretoria: 65,
-  durban: 75,
-  default: 80, // Default fee if no region selected
+  "cape-town": 85,
+  johannesburg: 85,
+  pretoria: 85,
+  durban: 85,
+  default: 85, // Default fee if no region selected
 };
 
 interface FormData {
@@ -95,31 +95,6 @@ export function CheckoutDialog(): JSX.Element {
       setFormData(newFormData);
     }
   }, [isAuthenticated, user, isCheckoutOpen]);
-
-  // Debug logging to see if total is correctly calculated
-  // useEffect(() => {
-  //   if (isCheckoutOpen) {
-  //     console.log("Checkout opened with items:", items);
-  //     console.log("Subtotal value:", subtotal);
-  //     console.log("Selected region:", selectedRegion);
-  //     console.log("Delivery fee:", deliveryFee);
-  //     console.log("Final total:", total);
-  //     console.log("User authenticated:", isAuthenticated);
-  //     console.log(
-  //       "User has default address:",
-  //       user?.defaultAddress ? "Yes" : "No"
-  //     );
-  //   }
-  // }, [
-  //   isCheckoutOpen,
-  //   items,
-  //   subtotal,
-  //   selectedRegion,
-  //   deliveryFee,
-  //   total,
-  //   isAuthenticated,
-  //   user,
-  // ]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

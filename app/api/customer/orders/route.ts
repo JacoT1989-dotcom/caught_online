@@ -15,10 +15,6 @@ export async function POST(request: NextRequest) {
 
     const orders = await getCustomerOrders(customerAccessToken);
 
-    // Add this logging
-    console.log("Orders from Shopify:", JSON.stringify(orders, null, 2));
-    console.log("Orders edge count:", orders?.edges?.length || 0);
-
     return NextResponse.json({ customer: { orders } });
   } catch (error) {
     console.error("Error fetching customer orders:", error);

@@ -1,41 +1,48 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { usePathname, useRouter } from 'next/navigation';
-import { Grid, Search, User, Menu, ChevronDown, Moon, Sun } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
-import { collections } from '@/lib/collections';
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { usePathname, useRouter } from "next/navigation";
+import { Grid, Search, User, Menu, ChevronDown, Moon, Sun } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+import { collections } from "@/lib/collections";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { useState } from 'react';
-import { useTheme } from 'next-themes';
+import { useState } from "react";
+import { useTheme } from "next-themes";
+import { SearchModal } from "./SearchModal"; // Import the SearchModal component
 
 const menuItems = [
-  { label: 'About Us', href: '/about' },
-  { label: 'Sustainability', href: '/sustainability' },
-  { label: 'Why Frozen?', href: '/why-frozen' },
-  { label: 'Subscription', href: '/subscription' },
-  { label: 'Recipes', href: '/recipes' },
-  { label: 'Contact Us', href: '/contact' },
-  { label: 'Terms & Conditions', href: '/terms' },
-  { label: 'Privacy Policy', href: '/privacy' },
+  { label: "About Us", href: "/about" },
+  { label: "Sustainability", href: "/sustainability" },
+  { label: "Why Frozen?", href: "/why-frozen" },
+  { label: "Subscription", href: "/subscription" },
+  { label: "Recipes", href: "/blog" },
+  { label: "Contact Us", href: "/contact" },
+  { label: "Terms & Conditions", href: "/terms" },
+  { label: "Privacy Policy", href: "/privacy" },
 ];
 
 const navItems = [
-  { id: 'menu', label: 'Menu', icon: Menu },
-  { id: 'explore', label: 'Explore', icon: Grid, href: '/categories' },
-  { id: 'search', label: 'Search', icon: Search, href: '/search' },
-  { id: 'account', label: 'Account', icon: User, href: '/account' },
+  { id: "menu", label: "Menu", icon: Menu },
+  { id: "explore", label: "Explore", icon: Grid, href: "/categories" },
+  { id: "search", label: "Search", icon: Search }, // Removed href
+  { id: "account", label: "Account", icon: User, href: "/account" },
 ];
 
 export function MobileNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false); // New state for search modal
   const [openCategories, setOpenCategories] = useState<string[]>([]);
   const pathname = usePathname();
   const router = useRouter();
@@ -43,22 +50,22 @@ export function MobileNav() {
 
   const handleNavItemClick = (id: string) => {
     switch (id) {
-      case 'menu':
+      case "menu":
         setIsMenuOpen(true);
         break;
-      case 'explore':
-      case 'search':
-      case 'account':
-        router.push(navItems.find(item => item.id === id)?.href || '/');
+      case "search":
+        setIsSearchOpen(true); // Open search modal instead of navigation
+        break;
+      case "explore":
+      case "account":
+        router.push(navItems.find((item) => item.id === id)?.href || "/");
         break;
     }
   };
 
   const toggleCategory = (id: string) => {
-    setOpenCategories(prev => 
-      prev.includes(id) 
-        ? prev.filter(c => c !== id)
-        : [...prev, id]
+    setOpenCategories((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
     );
   };
 
@@ -77,9 +84,7 @@ export function MobileNav() {
                 className={cn(
                   "flex flex-col items-center justify-center gap-1",
                   "w-full h-full rounded-none text-xs",
-                  isActive 
-                    ? "text-white" 
-                    : "text-white/70 hover:text-white"
+                  isActive ? "text-white" : "text-white/70 hover:text-white"
                 )}
                 onClick={() => handleNavItemClick(item.id)}
               >
@@ -90,6 +95,9 @@ export function MobileNav() {
           })}
         </nav>
       </div>
+
+      {/* Search Modal */}
+      <SearchModal open={isSearchOpen} onOpenChange={setIsSearchOpen} />
 
       <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
         <SheetContent side="left" className="w-[300px] p-0">
@@ -125,10 +133,11 @@ export function MobileNav() {
                           size="sm"
                         >
                           <span>{collection.title}</span>
-                          <ChevronDown 
+                          <ChevronDown
                             className={cn(
                               "h-4 w-4 transition-transform duration-200",
-                              openCategories.includes(collection.id) && "rotate-180"
+                              openCategories.includes(collection.id) &&
+                                "rotate-180"
                             )}
                           />
                         </Button>
@@ -142,7 +151,7 @@ export function MobileNav() {
                             size="sm"
                             asChild
                           >
-                            <Link 
+                            <Link
                               href={`/products?collection=${sub.handle}`}
                               onClick={() => setIsMenuOpen(false)}
                             >
@@ -181,12 +190,12 @@ export function MobileNav() {
                 <Button
                   variant="ghost"
                   className="w-full justify-between"
-                  onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                  onClick={() => setTheme(theme === "light" ? "dark" : "light")}
                 >
                   <span className="font-medium">
-                    {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+                    {theme === "light" ? "Dark Mode" : "Light Mode"}
                   </span>
-                  {theme === 'light' ? (
+                  {theme === "light" ? (
                     <Moon className="h-4 w-4" />
                   ) : (
                     <Sun className="h-4 w-4" />

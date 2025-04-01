@@ -27,6 +27,7 @@ import { addressSchema, AddressFormData } from "@/lib/zod/customer";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { trackFormSubmit } from "@/lib/analytics";
 
 export function AddressEditor(): JSX.Element {
   const { user, accessToken, refreshUserData } = useAuth();
@@ -69,6 +70,7 @@ export function AddressEditor(): JSX.Element {
   const onSubmit = async (data: AddressFormData): Promise<void> => {
     setIsLoading(true);
     setServerError(null);
+    trackFormSubmit("Address Edit Form");
 
     try {
       let endpoint: string;
