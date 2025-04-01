@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import Link from 'next/link';
 
 interface StampedReviewsProps {
   productId: string;
@@ -20,6 +22,14 @@ interface Review {
   productTitle?: string;
 }
 
+interface ReviewsResponse {
+  reviews: Review[];
+  count: number;
+  totalPages: number;
+  currentPage: number;
+  source: string;
+}
+
 export default function StampedReviews({
   productId,
   productTitle = '',
@@ -29,9 +39,27 @@ export default function StampedReviews({
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
   
   // Extract handle from URL if not provided
   const extractedHandle = productHandle || (productUrl ? extractHandleFromUrl(productUrl) : '');
+  
+  // Get current page from URL or default to 1
+  useEffect(() => {
+    const pageParam = searchParams?.get('reviewPage');
+    if (pageParam) {
+      const parsedPage = parseInt(pageParam, 10);
+      if (!isNaN(parsedPage) && parsedPage > 0) {
+        setCurrentPage(parsedPage);
+      }
+    }
+  }, [searchParams]);
   
   // Helper function to extract product handle from URL
   function extractHandleFromUrl(url: string): string {
@@ -58,21 +86,26 @@ export default function StampedReviews({
         
         const endpoint = `/api/reviews/get-reviews?productId=${encodeURIComponent(productId)}` +
           (productTitle ? `&title=${encodeURIComponent(productTitle)}` : '') +
-          (handle ? `&handle=${encodeURIComponent(handle)}` : '');
+          (handle ? `&handle=${encodeURIComponent(handle)}` : '') +
+          `&page=${currentPage}&limit=20`;
         
         console.log(`Fetching reviews from ${endpoint}`);
         
         const response = await fetch(endpoint);
         
         if (response.ok) {
-          const data = await response.json();
+          const data: ReviewsResponse = await response.json();
           console.log('Reviews data received:', data);
           
           if (data.reviews && data.reviews.length > 0) {
             setReviews(data.reviews);
+            setTotalReviews(data.count || data.reviews.length);
+            setTotalPages(data.totalPages || Math.ceil((data.count || data.reviews.length) / 20));
           } else {
             console.log('No reviews found for this product');
             setReviews([]);
+            setTotalReviews(0);
+            setTotalPages(1);
           }
         } else {
           console.error('Failed to fetch reviews');
@@ -91,7 +124,7 @@ export default function StampedReviews({
     if (productId) {
       fetchReviews();
     }
-  }, [productId, productTitle, extractedHandle]);
+  }, [productId, productTitle, extractedHandle, currentPage]);
 
   // Calculate average rating
   const averageRating = reviews.length 
@@ -107,10 +140,106 @@ export default function StampedReviews({
       day: 'numeric'
     });
   };
-
-  if (loading) {
+  
+  // Update the URL with the new page number
+  const updatePageInUrl = (newPage: number) => {
+    const current = new URLSearchParams(Array.from(searchParams?.entries() || []));
+    current.set('reviewPage', newPage.toString());
+    
+    const search = current.toString();
+    const query = search ? `?${search}` : '';
+    
+    router.push(`${pathname}${query}`);
+  };
+  
+  // Handle page change
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    
+    // Update URL with the new page
+    updatePageInUrl(newPage);
+    
+    // Update state
+    setCurrentPage(newPage);
+    
+    // Scroll to reviews section
+    document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' });
+  };
+  
+  // Render pagination controls
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+    
+    // Calculate range of pages to display
+    const range = 2; // Show 2 pages on each side of current
+    const startPage = Math.max(1, currentPage - range);
+    const endPage = Math.min(totalPages, currentPage + range);
+    
+    // Create array of page numbers to display
+    const pages = [];
+    
+    // Always show first page
+    if (startPage > 1) {
+      pages.push(1);
+      if (startPage > 2) pages.push('...');
+    }
+    
+    // Add pages in range
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    
+    // Always show last page
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) pages.push('...');
+      pages.push(totalPages);
+    }
+    
     return (
-      <div className="my-8">
+      <div className="flex flex-wrap justify-center items-center mt-8 space-x-2">
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="px-3 py-2 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label="Previous page"
+        >
+          Previous
+        </button>
+        
+        {pages.map((page, index) => (
+          page === '...' ? (
+            <span key={`ellipsis-${index}`} className="px-3 py-2">...</span>
+          ) : (
+            <button
+              key={`page-${page}`}
+              onClick={() => handlePageChange(Number(page))}
+              disabled={currentPage === page}
+              className={`px-3 py-2 border rounded-md text-sm ${
+                currentPage === page 
+                  ? 'bg-pink-600 text-white border-pink-600' 
+                  : 'border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              {page}
+            </button>
+          )
+        ))}
+        
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="px-3 py-2 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label="Next page"
+        >
+          Next
+        </button>
+      </div>
+    );
+  };
+
+  if (loading && reviews.length === 0) {
+    return (
+      <div id="reviews-section" className="my-8">
         <h2 className="mb-6 text-2xl font-bold text-gray-900">Customer Reviews</h2>
         <div className="text-center p-8">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-pink-300 border-r-transparent"></div>
@@ -122,7 +251,7 @@ export default function StampedReviews({
 
   if (error) {
     return (
-      <div className="my-8">
+      <div id="reviews-section" className="my-8">
         <h2 className="mb-6 text-2xl font-bold text-gray-900">Customer Reviews</h2>
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-center">
           <p className="text-red-600">{error}</p>
@@ -133,7 +262,7 @@ export default function StampedReviews({
 
   if (reviews.length === 0) {
     return (
-      <div className="my-8">
+      <div id="reviews-section" className="my-8">
         <h2 className="mb-6 text-2xl font-bold text-gray-900">Customer Reviews</h2>
         <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
           <p className="text-gray-600">No reviews yet for this product.</p>
@@ -143,7 +272,7 @@ export default function StampedReviews({
   }
 
   return (
-    <div className="my-8">
+    <div id="reviews-section" className="my-8">
       <h2 className="mb-6 text-2xl font-bold text-gray-900">Customer Reviews</h2>
       
       {/* Review Summary */}
@@ -165,7 +294,7 @@ export default function StampedReviews({
             </div>
           </div>
           <div className="text-gray-600">
-            Based on {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
+            Based on {totalReviews} {totalReviews === 1 ? 'review' : 'reviews'} • Page {currentPage} of {totalPages}
           </div>
         </div>
       </div>
@@ -215,6 +344,9 @@ export default function StampedReviews({
           </div>
         ))}
       </div>
+      
+      {/* Pagination */}
+      {renderPagination()}
     </div>
   );
 }

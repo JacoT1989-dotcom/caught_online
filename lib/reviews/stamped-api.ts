@@ -16,6 +16,27 @@ export class StampedApiClient {
   }
   
   /**
+   * Sanitize product ID for Stamped API
+   */
+  private sanitizeProductId(productId: string): string {
+    // If it's a Shopify gid, extract just the numeric part
+    if (productId.includes('gid://shopify/Product/')) {
+      const idMatch = productId.match(/\/Product\/(\d+)/);
+      if (idMatch && idMatch[1]) {
+        return idMatch[1];
+      }
+    }
+    
+    // If it contains slashes but isn't a gid format, take the last part
+    if (productId.includes('/') && !productId.includes('gid://')) {
+      const parts = productId.split('/');
+      return parts[parts.length - 1];
+    }
+    
+    return productId;
+  }
+  
+  /**
    * Makes a request to the Stamped API with proper error handling
    */
   private async makeRequest(url: string, options: RequestInit = {}) {
@@ -52,12 +73,17 @@ export class StampedApiClient {
    */
   async getProductReviews(productId: string, page: number = 1) {
     try {
+      // Sanitize the product ID
+      const cleanProductId = this.sanitizeProductId(productId);
+      
       const params = new URLSearchParams({
-        productId,
+        productId: cleanProductId,
         sId: STAMPED_CONFIG.storeHash,
         apiKey: STAMPED_CONFIG.publicKey,
         page: page.toString(),
-        storeUrl: STAMPED_CONFIG.storeUrl
+        storeUrl: STAMPED_CONFIG.storeUrl,
+        take: '20', // Match the limit in the frontend
+        sortReviews: 'recent'
       });
       
       const url = `https://stamped.io/api/widget/reviews?${params.toString()}`;
@@ -73,11 +99,14 @@ export class StampedApiClient {
    */
   async getProductRatingSummary(productId: string) {
     try {
+      // Sanitize the product ID
+      const cleanProductId = this.sanitizeProductId(productId);
+      
       // Using the method from the documentation with productIds payload
       const bodyData = {
         productIds: [
           {
-            productId,
+            productId: cleanProductId,
             productSKU: "",
             productType: "",
             productTitle: ""
@@ -106,17 +135,22 @@ export class StampedApiClient {
    */
   async submitReview(reviewData: any) {
     try {
+      // Sanitize the product ID if present
+      const cleanProductId = reviewData.productId 
+        ? this.sanitizeProductId(reviewData.productId) 
+        : '';
+      
       // Create form data based on documentation
       const formData = new URLSearchParams();
       
       // Add required fields from the documentation
-      formData.append('productId', reviewData.productId);
+      formData.append('productId', cleanProductId);
       formData.append('author', reviewData.author);
       formData.append('email', reviewData.email);
       formData.append('reviewRating', reviewData.reviewRating.toString());
       formData.append('reviewTitle', reviewData.reviewTitle);
       formData.append('reviewMessage', reviewData.reviewMessage);
-      formData.append('reviewRecommendProduct', 'true');
+      formData.append('reviewRecommendProduct', reviewData.reviewRecommendProduct ? 'true' : 'false');
       formData.append('productName', reviewData.productName || '');
       
       if (reviewData.productSKU) formData.append('productSKU', reviewData.productSKU);
@@ -137,7 +171,7 @@ export class StampedApiClient {
           'Content-Type': 'application/x-www-form-urlencoded',
           'Authorization': this.basicAuthHeader
         },
-        body: formData
+        body: formData.toString()
       });
     } catch (error) {
       console.error('Failed to submit review:', error);

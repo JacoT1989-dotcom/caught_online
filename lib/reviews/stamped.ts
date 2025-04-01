@@ -1,6 +1,5 @@
 // lib/reviews/stamped.ts
 import { STAMPED_CONFIG } from './config';
-import { EnhancedStampedClient } from './enhanced-stamped-client';
 
 // Define the Review type that your component expects
 export interface Review {

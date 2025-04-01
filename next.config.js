@@ -14,6 +14,8 @@ const nextConfig = {
 
   experimental: {
     missingSuspenseWithCSRBailout: false,
+    // Added for better handling of dynamic API routes during static generation
+    instrumentationHook: true,
   },
 
   // Add environment variable loading
@@ -23,6 +25,9 @@ const nextConfig = {
     CONTENTFUL_PREVIEW_ACCESS_TOKEN: process.env.CONTENTFUL_PREVIEW_ACCESS_TOKEN,
     CONTENTFUL_ENVIRONMENT: process.env.CONTENTFUL_ENVIRONMENT,
   },
+  
+  // Set output mode to standalone for better handling of API routes
+  output: 'standalone',
 };
 
 module.exports = nextConfig;

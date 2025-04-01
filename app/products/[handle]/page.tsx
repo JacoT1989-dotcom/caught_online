@@ -97,11 +97,10 @@ export default async function ProductPage({
 
           <div className="mt-16">
             
-          <StampedReviews
-  productId={product.id}
+          <StampedReviews 
+  productId={product.id} 
   productTitle={product.title}
-  productUrl={`/products/${product.handle}`} // Construct the URL from the handle
-  productHandle={params.handle}
+  productUrl={`/products/${product.handle}`}
 />
 {/* <StampedReviews 
               productId={product.id}
