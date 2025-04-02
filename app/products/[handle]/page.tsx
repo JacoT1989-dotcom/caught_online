@@ -93,22 +93,14 @@ export default async function ProductPage({
         </div>
         <ProductErrorBoundary>
           <ProductDetails product={product} />
-
           <div className="mt-16">
-            
-          <StampedReviews 
-  productId={product.id} 
-  productTitle={product.title}
-  productUrl={`/products/${product.handle}`}
-/>
-{/* <StampedReviews 
-              productId={product.id}
-              productTitle={product.title}
-              productUrl={productUrl}
-              productHandle={params.handle}
-              useDashboardApi={true}
-            /> */}
-          </div>
+  <StampedReviews 
+    productId={product.id}
+    productTitle={product.title}
+    productUrl={`/products/${product.handle}`}
+    productHandle={params.handle}
+  />
+</div>
         </ProductErrorBoundary>
       </div>
     </div>
