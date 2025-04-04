@@ -88,6 +88,15 @@ export const collections: Collection[] = [
       { id: "smoked-trout", title: "Trout", handle: "trout-cured" },
     ],
   },
+  {
+    id: "caviar",
+    title: "Caviar",
+    handle: "caviar",
+    description: "Luxury premium caviar selections",
+    subcollections: [
+      { id: "caviar", title: "Caviar", handle: "caviar" },
+    ],
+  },
 ];
 
 export function getCollectionByHandle(handle: string): Collection | undefined {

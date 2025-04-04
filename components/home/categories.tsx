@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
-import { Fish, Cookie, Cigarette, Waves } from "lucide-react";
+import { Fish, Cookie, Cigarette, Waves, Egg } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Crab } from "../icons";
 
@@ -42,6 +42,13 @@ const categories = [
     icon: Waves,
     href: "/products?collection=wild-caught",
     color: "bg-emerald-500",
+  },
+  {
+    title: "Caviar",
+    description: "Luxury premium caviar selections",
+    icon: Egg,
+    href: "/products?collection=caviar",
+    color: "bg-purple-500",
   },
 ];
 
