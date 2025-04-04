@@ -6,20 +6,25 @@ import {
   getProductReviews,
   getProductRatingSummary,
   Review,
+  ReviewSubmission
 } from "@/lib/reviews/stamped";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Star, StarHalf, CheckCircle2 } from "lucide-react";
+import { Star, StarHalf, CheckCircle2, MessageSquare, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
+import ReviewForm from "@/components/reviews/review-form";
 
 interface ReviewsSectionProps {
   productId: string;
+  productName: string;
+  productUrl: string;
+  productHandle?: string;
 }
 
-// Define the API response structure if your getProductReviews includes pagination metadata
+// Define the API response structure
 interface ReviewsResponse {
   data: Review[];
   meta: {
@@ -30,18 +35,38 @@ interface ReviewsResponse {
   };
 }
 
-export function ReviewsSection({ productId }: ReviewsSectionProps) {
+export function ReviewsSection({ 
+  productId, 
+  productName, 
+  productUrl,
+  productHandle = '' 
+}: ReviewsSectionProps) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [sortOrder, setSortOrder] = useState<'recent' | 'highest' | 'lowest'>('recent');
 
-  const { data: reviews, isLoading: isLoadingReviews } =
-    useQuery<ReviewsResponse>({
-      queryKey: ["reviews", productId, currentPage],
-      queryFn: async () => {
+  // Query for reviews
+  const { 
+    data: reviews, 
+    isLoading: isLoadingReviews,
+    isError: isReviewsError,
+    refetch: refetchReviews 
+  } = useQuery<ReviewsResponse>({
+    queryKey: ["reviews", productId, currentPage, sortOrder],
+    queryFn: async () => {
+      try {
         const data = await getProductReviews(productId, currentPage);
-        // If your API doesn't return the expected structure, transform it here
-        // This assumes getProductReviews returns an array of reviews
+        
+        // Sort the reviews based on sortOrder
+        let sortedData = [...data];
+        if (sortOrder === 'highest') {
+          sortedData.sort((a, b) => b.rating - a.rating);
+        } else if (sortOrder === 'lowest') {
+          sortedData.sort((a, b) => a.rating - b.rating);
+        } // 'recent' is the default from the API
+
         return {
-          data: data,
+          data: sortedData,
           meta: {
             total: data.length,
             page: currentPage,
@@ -49,13 +74,28 @@ export function ReviewsSection({ productId }: ReviewsSectionProps) {
             totalPages: Math.ceil(data.length / 10),
           },
         };
-      },
-    });
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+        throw error;
+      }
+    },
+  });
 
-  const { data: ratingSummary, isLoading: isLoadingSummary } = useQuery({
+  // Query for rating summary
+  const { 
+    data: ratingSummary, 
+    isLoading: isLoadingSummary,
+    isError: isSummaryError 
+  } = useQuery({
     queryKey: ["ratingSummary", productId],
     queryFn: () => getProductRatingSummary(productId),
   });
+
+  // Handle successful review submission
+  const handleReviewSubmitted = () => {
+    setShowReviewForm(false);
+    refetchReviews();  // Refresh the reviews list
+  };
 
   const renderStars = (rating: number) => {
     const stars = [];
@@ -88,6 +128,7 @@ export function ReviewsSection({ productId }: ReviewsSectionProps) {
     return stars;
   };
 
+  // Loading states
   if (isLoadingReviews || isLoadingSummary) {
     return (
       <div className="space-y-8">
@@ -97,6 +138,50 @@ export function ReviewsSection({ productId }: ReviewsSectionProps) {
             <Skeleton key={i} className="h-[150px] w-full" />
           ))}
         </div>
+      </div>
+    );
+  }
+
+  // Error states
+  if (isReviewsError || isSummaryError) {
+    return (
+      <Card className="p-6 text-center">
+        <AlertCircle className="h-12 w-12 mx-auto text-red-500 mb-4" />
+        <h3 className="text-xl font-bold mb-2">Unable to Load Reviews</h3>
+        <p className="mb-4 text-muted-foreground">
+          We&apos;re having trouble loading reviews for this product. Please try again later.
+        </p>
+        <Button onClick={() => refetchReviews()}>Try Again</Button>
+      </Card>
+    );
+  }
+
+  // Empty state - no reviews yet
+  if (!reviews?.data.length) {
+    return (
+      <div className="space-y-8">
+        {/* Rating Summary - Even with 0 reviews */}
+        <Card className="p-6">
+          <div className="text-center">
+            <h3 className="text-xl font-bold mb-4">No Reviews Yet</h3>
+            <p className="mb-6 text-muted-foreground">
+              Be the first to review &quot;{productName}&quot;
+            </p>
+            {!showReviewForm ? (
+              <Button onClick={() => setShowReviewForm(true)}>
+                Write a Review
+              </Button>
+            ) : (
+              <ReviewForm
+                productId={productId}
+                productName={productName}
+                productUrl={productUrl}
+                productHandle={productHandle}
+                onSuccess={handleReviewSubmitted}
+              />
+            )}
+          </div>
+        </Card>
       </div>
     );
   }
@@ -113,9 +198,18 @@ export function ReviewsSection({ productId }: ReviewsSectionProps) {
             <div className="flex justify-center md:justify-start mb-4">
               {renderStars(ratingSummary?.averageRating || 0)}
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground mb-4">
               Based on {ratingSummary?.totalReviews} reviews
             </p>
+            {!showReviewForm ? (
+              <Button 
+                onClick={() => setShowReviewForm(true)}
+                className="flex items-center gap-2"
+              >
+                <MessageSquare className="h-4 w-4" />
+                Write a Review
+              </Button>
+            ) : null}
           </div>
 
           <div className="space-y-2">
@@ -137,6 +231,36 @@ export function ReviewsSection({ productId }: ReviewsSectionProps) {
           </div>
         </div>
       </Card>
+
+      {/* Review Form (when shown) */}
+      {showReviewForm && (
+        <Card className="p-6">
+          <ReviewForm
+            productId={productId}
+            productName={productName}
+            productUrl={productUrl}
+            productHandle={productHandle}
+            onSuccess={handleReviewSubmitted}
+          />
+        </Card>
+      )}
+
+      {/* Sorting Controls */}
+      <div className="flex justify-between items-center">
+        <h3 className="font-semibold text-lg">Customer Reviews</h3>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Sort by:</span>
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value as 'recent' | 'highest' | 'lowest')}
+            className="border rounded p-1 text-sm"
+          >
+            <option value="recent">Most Recent</option>
+            <option value="highest">Highest Rated</option>
+            <option value="lowest">Lowest Rated</option>
+          </select>
+        </div>
+      </div>
 
       {/* Reviews List */}
       <div className="space-y-4">
@@ -186,7 +310,7 @@ export function ReviewsSection({ productId }: ReviewsSectionProps) {
       </div>
 
       {/* Pagination */}
-      {reviews && reviews.meta.total > 10 && (
+      {reviews && reviews.meta.totalPages > 1 && (
         <div className="flex justify-center gap-2">
           <Button
             variant="outline"
@@ -195,10 +319,15 @@ export function ReviewsSection({ productId }: ReviewsSectionProps) {
           >
             Previous
           </Button>
+          <div className="flex items-center gap-1 px-4">
+            <span className="text-sm">
+              Page {currentPage} of {reviews.meta.totalPages}
+            </span>
+          </div>
           <Button
             variant="outline"
-            onClick={() => setCurrentPage((p) => p + 1)}
-            disabled={currentPage * 10 >= reviews.meta.total}
+            onClick={() => setCurrentPage((p) => Math.min(reviews.meta.totalPages, p + 1))}
+            disabled={currentPage >= reviews.meta.totalPages}
           >
             Next
           </Button>

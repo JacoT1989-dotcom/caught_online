@@ -39,6 +39,13 @@ export interface ReviewSubmission {
   images?: File[];
 }
 
+// Define the result of a review submission
+export interface ReviewSubmissionResult {
+  success: boolean;
+  message: string;
+  review?: Review;
+}
+
 /**
  * Get rating summary for a product from Stamped.io
  * @param productId The Shopify product ID
@@ -54,6 +61,10 @@ export async function getProductRatingSummary(productId: string): Promise<Rating
     }
     
     const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to fetch rating summary');
+    }
     
     // Transform the API response to match what the component expects
     return {
@@ -102,6 +113,10 @@ export async function getProductReviews(productId: string, page: number = 1): Pr
     
     const data = await response.json();
     
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to fetch reviews');
+    }
+    
     // Check if reviews exist in the response
     if (!data.reviews || !Array.isArray(data.reviews)) {
       return [];
@@ -110,10 +125,10 @@ export async function getProductReviews(productId: string, page: number = 1): Pr
     // Transform the API response to match what the component expects
     return data.reviews.map((review: any) => ({
       id: review.id || `review-${Math.random().toString(36).substring(2, 11)}`,
-      rating: review.rating || 0,
+      rating: review.rating || review.reviewRating || 0,
       title: review.reviewTitle || review.title || 'Review',
-      content: review.reviewMessage || review.content || review.body || '',
-      dateCreated: review.createdAt || review.created_at || new Date().toISOString(),
+      content: review.reviewMessage || review.content || '',
+      dateCreated: review.createdAt || review.dateCreated || new Date().toISOString(),
       author: {
         name: review.authorName || review.author || 'Anonymous'
       },
@@ -131,7 +146,7 @@ export async function getProductReviews(productId: string, page: number = 1): Pr
  * @param reviewData The review data to submit
  * @returns Success status and message
  */
-export async function submitProductReview(reviewData: ReviewSubmission): Promise<{ success: boolean; message: string; review?: Review }> {
+export async function submitProductReview(reviewData: ReviewSubmission): Promise<ReviewSubmissionResult> {
   try {
     // Create FormData for file uploads
     const formData = new FormData();
@@ -163,7 +178,7 @@ export async function submitProductReview(reviewData: ReviewSubmission): Promise
     
     const data = await response.json();
     
-    if (!response.ok) {
+    if (!response.ok || !data.success) {
       throw new Error(data.error || 'Failed to submit review');
     }
     

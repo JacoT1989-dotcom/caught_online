@@ -1,10 +1,25 @@
+// app/products/[handle]/page.tsx
 import { notFound } from "next/navigation";
 import { ProductDetails } from "@/components/product/product-details";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { ProductErrorBoundary } from "@/components/error-boundary/product-error-boundary";
 import { getProduct } from "@/lib/shopify/products";
 import { collections, getCollectionByHandle } from "@/lib/collections";
-import StampedReviews from "@/components/reviews/StampedReviews";
+import dynamic from 'next/dynamic';
+
+// Dynamically import the ReviewsSection to avoid server/client hydration issues
+const ReviewsSection = dynamic(
+  () => import('@/components/reviews/reviews-section').then(mod => ({ default: mod.ReviewsSection })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="mt-16 p-12 border rounded-lg text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+        <p className="mt-4 text-gray-500">Loading reviews...</p>
+      </div>
+    ),
+  }
+);
 
 interface ProductPageProps {
   params: {
@@ -37,26 +52,32 @@ export default async function ProductPage({
     console.log("Product not found:", params.handle);
     notFound();
   }
+  
   // Build breadcrumb items based on navigation context
   const breadcrumbItems: BreadcrumbItem[] = [
     { label: "Products", href: "/products" },
   ];
+  
   // Determine collection context
   let collectionHandle = searchParams.collection;
+  
   // If no collection in URL, try to find product's primary collection
   if (!collectionHandle && product.collections?.edges.length > 0) {
     collectionHandle = product.collections.edges[0].node.handle;
   }
+  
   if (collectionHandle) {
     // Find parent collection if this is a subcollection
     const parentCollection = collections.find((c) =>
       c.subcollections?.some((sub) => sub.handle === collectionHandle)
     );
+    
     if (parentCollection) {
       // Add subcollection only
       const subcollection = parentCollection.subcollections?.find(
         (sub) => sub.handle === collectionHandle
       );
+      
       if (subcollection) {
         breadcrumbItems.push({
           label: subcollection.title,
@@ -66,6 +87,7 @@ export default async function ProductPage({
     } else {
       // Direct collection
       const collection = getCollectionByHandle(collectionHandle);
+      
       if (collection) {
         breadcrumbItems.push({
           label: collection.title,
@@ -91,16 +113,20 @@ export default async function ProductPage({
         <div className="mb-1">
           <Breadcrumbs items={breadcrumbItems} />
         </div>
+        
         <ProductErrorBoundary>
+          {/* Product details section */}
           <ProductDetails product={product} />
+          
+          {/* Reviews section */}
           <div className="mt-16">
-  <StampedReviews 
-    productId={product.id}
-    productTitle={product.title}
-    productUrl={`/products/${product.handle}`}
-    productHandle={params.handle}
-  />
-</div>
+            <ReviewsSection
+              productId={product.id}
+              productName={product.title}
+              productUrl={productUrl}
+              productHandle={params.handle}
+            />
+          </div>
         </ProductErrorBoundary>
       </div>
     </div>

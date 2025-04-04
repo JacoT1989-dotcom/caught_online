@@ -157,7 +157,6 @@ export class ProductIdMapper {
     );
 
     if (existingMapping) {
-      console.warn('Product mapping already exists');
       return false;
     }
 
@@ -218,7 +217,6 @@ export class ProductIdMapper {
     // Add all new mappings to in-memory store
     if (newMappings.length > 0) {
       this.productMappings.push(...newMappings);
-      console.log(`[ProductMiddleware] Added ${newMappings.length} new mappings from CSV import`);
     }
     
     return newMappings;

@@ -2,14 +2,15 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { submitProductReview, type ReviewSubmission } from '@/lib/reviews/stamped';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
+import { submitProductReview } from '@/lib/reviews/stamped';
 
 interface ReviewFormProps {
   productId: string;
   productName?: string;
   productUrl?: string;
+  productHandle?: string; // Add product handle
   onSuccess?: () => void;
 }
 
@@ -17,9 +18,10 @@ export default function ReviewForm({
   productId, 
   productName = '', 
   productUrl = '',
+  productHandle = '', // Pass product handle 
   onSuccess 
 }: ReviewFormProps) {
-  const [formData, setFormData] = useState({
+  const [reviewFormData, setReviewFormData] = useState({
     name: '',
     email: '',
     rating: 5,
@@ -38,16 +40,16 @@ export default function ReviewForm({
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setReviewFormData(prev => ({ ...prev, [name]: value }));
   };
   
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
-    setFormData(prev => ({ ...prev, [name]: checked }));
+    setReviewFormData(prev => ({ ...prev, [name]: checked }));
   };
   
   const handleRatingChange = (rating: number) => {
-    setFormData(prev => ({ ...prev, rating }));
+    setReviewFormData(prev => ({ ...prev, rating }));
   };
   
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,59 +90,82 @@ export default function ReviewForm({
     setError(null);
     
     // Validate required fields
-    if (!formData.name || !formData.email || !formData.title || !formData.content) {
+    if (!reviewFormData.name || !reviewFormData.email || !reviewFormData.title || !reviewFormData.content) {
       setError('Please fill out all required fields');
       setLoading(false);
       return;
     }
     
     try {
-      // Prepare submission data
-      const reviewData: ReviewSubmission = {
-        productId,
-        rating: formData.rating,
-        title: formData.title,
-        content: formData.content,
-        name: formData.name,
-        email: formData.email,
-        isRecommended: formData.isRecommended,
-        images: images.length > 0 ? images : undefined
-      };
+      // Create FormData for file uploads
+      const formData = new FormData();
       
-      // Submit the review
-      const result = await submitProductReview(reviewData);
+      // Add review data to FormData
+      formData.append('productId', productId);
+      formData.append('rating', reviewFormData.rating.toString());
+      formData.append('title', reviewFormData.title);
+      formData.append('content', reviewFormData.content);
+      formData.append('name', reviewFormData.name);
+      formData.append('email', reviewFormData.email);
+      formData.append('isRecommended', reviewFormData.isRecommended.toString());
       
-      if (result.success) {
-        setSuccess(true);
-        
-        // Reset form data
-        setFormData({
-          name: '',
-          email: '',
-          rating: 5,
-          title: '',
-          content: '',
-          isRecommended: true
-        });
-        
-        // Clear images
-        setImages([]);
-        setImagePreviewUrls(prev => {
-          // Revoke all object URLs
-          prev.forEach(url => URL.revokeObjectURL(url));
-          return [];
-        });
-        
-        // Callback if provided
-        if (onSuccess) {
-          onSuccess();
-        }
-      } else {
-        setError(result.message);
+      // Add product information
+      formData.append('productName', productName);
+      if (productUrl) {
+        formData.append('productUrl', productUrl);
       }
-    } catch (err) {
+      
+      // Add product handle for proper identification
+      if (productHandle) {
+        formData.append('productHandle', productHandle);
+      }
+      
+      // Add images if any
+      if (images && images.length > 0) {
+        images.forEach((image, index) => {
+          formData.append(`image_${index}`, image);
+        });
+      }
+      
+      // Call the API endpoint to submit the review
+      const response = await fetch('/api/reviews/submit-review', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to submit review');
+      }
+      
+      setSuccess(true);
+      
+      // Reset form data
+      setReviewFormData({
+        name: '',
+        email: '',
+        rating: 5,
+        title: '',
+        content: '',
+        isRecommended: true
+      });
+      
+      // Clear images
+      setImages([]);
+      setImagePreviewUrls(prev => {
+        // Revoke all object URLs
+        prev.forEach(url => URL.revokeObjectURL(url));
+        return [];
+      });
+      
+      // Callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (error) {
       setError('Failed to submit review. Please try again later.');
-      console.error('Review submission error:', err);
+      console.error('Review submission error:', error);
     } finally {
       setLoading(false);
     }
@@ -183,7 +208,7 @@ export default function ReviewForm({
                 onClick={() => handleRatingChange(star)}
                 className="text-2xl focus:outline-none"
               >
-                <span className={star <= formData.rating ? 'text-yellow-400' : 'text-gray-300'}>
+                <span className={star <= reviewFormData.rating ? 'text-yellow-400' : 'text-gray-300'}>
                   ★
                 </span>
               </button>
@@ -200,7 +225,7 @@ export default function ReviewForm({
             type="text"
             id="title"
             name="title"
-            value={formData.title}
+            value={reviewFormData.title}
             onChange={handleInputChange}
             required
             className="w-full p-2 border border-gray-300 rounded-md"
@@ -215,7 +240,7 @@ export default function ReviewForm({
           <textarea
             id="content"
             name="content"
-            value={formData.content}
+            value={reviewFormData.content}
             onChange={handleInputChange}
             required
             rows={4}
@@ -232,7 +257,7 @@ export default function ReviewForm({
             type="text"
             id="name"
             name="name"
-            value={formData.name}
+            value={reviewFormData.name}
             onChange={handleInputChange}
             required
             className="w-full p-2 border border-gray-300 rounded-md"
@@ -248,7 +273,7 @@ export default function ReviewForm({
             type="email"
             id="email"
             name="email"
-            value={formData.email}
+            value={reviewFormData.email}
             onChange={handleInputChange}
             required
             className="w-full p-2 border border-gray-300 rounded-md"
@@ -263,7 +288,7 @@ export default function ReviewForm({
               type="checkbox"
               id="isRecommended"
               name="isRecommended"
-              checked={formData.isRecommended}
+              checked={reviewFormData.isRecommended}
               onChange={handleCheckboxChange}
               className="h-4 w-4 text-blue-600 rounded"
             />

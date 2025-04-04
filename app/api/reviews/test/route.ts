@@ -1,38 +1,51 @@
-// app/api/reviews/test/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { EnhancedStampedClient } from '@/lib/reviews/enhanced-stamped-api';
+// app/api/reviews/test-connection/route.ts
+import { NextResponse } from 'next/server';
+import { StampedApiClient } from '@/lib/reviews/stamped-api';
+import { STAMPED_CONFIG } from '@/lib/reviews/config';
 
 /**
- * Test endpoint to verify access to Stamped.io dashboard API
- * This will help confirm if we can see all reviews in the store
+ * Utility endpoint to test Stamped.io API connection
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    console.log('[API] Testing access to Stamped.io dashboard API');
+    // Output current config (redacting private key)
+    console.log('Testing Stamped connection with config:', {
+      publicKey: STAMPED_CONFIG.publicKey ? 'Set' : 'Not set',
+      privateKey: STAMPED_CONFIG.privateKey ? 'Set (redacted)' : 'Not set',
+      storeHash: STAMPED_CONFIG.storeHash,
+      storeUrl: STAMPED_CONFIG.storeUrl,
+    });
     
-    const client = new EnhancedStampedClient();
-    const result = await client.getAllStoreReviews(20);
-    
-    console.log(`[API] Dashboard API response received, found ${result.results?.length || 0} reviews`);
-    
-    // If we got results, log the first one for debugging
-    if (result.results && result.results.length > 0) {
-      const firstReview = result.results[0].review;
-      console.log(`[API] First review: ID=${firstReview.id}, Product=${firstReview.productTitle}, Rating=${firstReview.rating}`);
-    }
+    const client = new StampedApiClient();
+    const result = await client.verifyConnection();
     
     return NextResponse.json({
-      success: true,
-      reviewCount: result.results?.length || 0,
-      firstReview: result.results?.[0] || null,
-      rawResponse: result
+      success: result.success,
+      message: result.success ? 'Connection successful' : 'Connection failed',
+      config: {
+        publicKey: STAMPED_CONFIG.publicKey ? '✓ Set' : '✗ Missing',
+        privateKey: STAMPED_CONFIG.privateKey ? '✓ Set' : '✗ Missing',
+        storeHash: STAMPED_CONFIG.storeHash ? '✓ Set' : '✗ Missing',
+        storeUrl: STAMPED_CONFIG.storeUrl ? `✓ Set (${STAMPED_CONFIG.storeUrl})` : '✗ Missing',
+      },
+      error: result.success ? null : result.error
     });
   } catch (error) {
-    console.error('[API] Error testing Stamped dashboard API:', error);
+    console.error('Error testing Stamped connection:', error);
     
     return NextResponse.json({
       success: false,
-      error: error instanceof Error ? error.message : String(error)
+      message: 'Connection test failed with error',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      config: {
+        publicKey: STAMPED_CONFIG.publicKey ? '✓ Set' : '✗ Missing',
+        privateKey: STAMPED_CONFIG.privateKey ? '✓ Set' : '✗ Missing',
+        storeHash: STAMPED_CONFIG.storeHash ? '✓ Set' : '✗ Missing',
+        storeUrl: STAMPED_CONFIG.storeUrl ? `✓ Set (${STAMPED_CONFIG.storeUrl})` : '✗ Missing',
+      }
     }, { status: 500 });
   }
 }
+
+// Mark this route as dynamic
+export const dynamic = 'force-dynamic';

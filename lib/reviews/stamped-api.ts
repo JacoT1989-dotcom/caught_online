@@ -51,6 +51,9 @@ export class StampedApiClient {
     };
     
     console.log(`Making request to: ${url}`);
+    if (options.body) {
+      console.log(`Request body: ${options.body}`);
+    }
     
     try {
       const response = await fetch(url, requestOptions);
@@ -58,7 +61,15 @@ export class StampedApiClient {
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`API request failed (${response.status}): ${errorText}`);
+        console.error('Request URL:', url);
+        console.error('Store Hash:', STAMPED_CONFIG.storeHash);
+        console.error('Store URL:', STAMPED_CONFIG.storeUrl);
         throw new Error(`API request failed with status ${response.status}`);
+      }
+      
+      // For empty responses, return a success indicator
+      if (response.headers.get('content-length') === '0') {
+        return { success: true };
       }
       
       return await response.json();
@@ -76,57 +87,84 @@ export class StampedApiClient {
       // Sanitize the product ID
       const cleanProductId = this.sanitizeProductId(productId);
       
-      const params = new URLSearchParams({
-        productId: cleanProductId,
-        sId: STAMPED_CONFIG.storeHash,
-        apiKey: STAMPED_CONFIG.publicKey,
-        page: page.toString(),
-        storeUrl: STAMPED_CONFIG.storeUrl,
-        take: '20', // Match the limit in the frontend
-        sortReviews: 'recent'
-      });
+      const params = new URLSearchParams();
+      params.append('productId', cleanProductId);
+      params.append('page', page.toString());
+      params.append('take', '20'); // Match the limit in the frontend
+      params.append('sortReviews', 'recent');
+      
+      // Only append these if they exist
+      if (STAMPED_CONFIG.storeHash) params.append('sId', STAMPED_CONFIG.storeHash);
+      if (STAMPED_CONFIG.publicKey) params.append('apiKey', STAMPED_CONFIG.publicKey);
+      if (STAMPED_CONFIG.storeUrl) params.append('storeUrl', STAMPED_CONFIG.storeUrl);
       
       const url = `https://stamped.io/api/widget/reviews?${params.toString()}`;
       return await this.makeRequest(url);
     } catch (error) {
-      console.log('Widget API failed:', error);
+      console.error('Widget API failed:', error);
       throw error;
     }
   }
   
   /**
-   * Get rating summary for a product using badges API (from official docs)
+   * Get rating summary for a product using calculated approach from reviews
+   * (Since the badges API is consistently failing)
    */
   async getProductRatingSummary(productId: string) {
     try {
-      // Sanitize the product ID
-      const cleanProductId = this.sanitizeProductId(productId);
+      // For now, skip the badges API attempt since it's consistently failing
+      // Just use the reviews endpoint to calculate ratings
+      console.log('Calculating rating summary from reviews');
+      const reviewsData = await this.getProductReviews(productId, 1);
       
-      // Using the method from the documentation with productIds payload
-      const bodyData = {
-        productIds: [
-          {
-            productId: cleanProductId,
-            productSKU: "",
-            productType: "",
-            productTitle: ""
+      // Calculate average rating and distribution
+      let totalRating = 0;
+      const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      
+      if (reviewsData.data && Array.isArray(reviewsData.data)) {
+        reviewsData.data.forEach((review: any) => {
+          const rating = review.reviewRating || 0;
+          totalRating += rating;
+          
+          // Increment the appropriate rating category
+          const ratingCategory = Math.round(rating) as 1 | 2 | 3 | 4 | 5;
+          if (ratingCategory >= 1 && ratingCategory <= 5) {
+            distribution[ratingCategory]++;
           }
-        ],
-        apiKey: STAMPED_CONFIG.publicKey,
-        storeUrl: STAMPED_CONFIG.storeUrl
-      };
+        });
+      }
       
-      const url = 'https://stamped.io/api/widget/badges';
-      return await this.makeRequest(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(bodyData)
-      });
+      const count = reviewsData.data?.length || 0;
+      const avgRating = count > 0 ? totalRating / count : 0;
+      
+      return [{
+        productId,
+        rating: avgRating,
+        count: count,
+        breakdown: {
+          rating5: distribution[5],
+          rating4: distribution[4],
+          rating3: distribution[3],
+          rating2: distribution[2],
+          rating1: distribution[1]
+        }
+      }];
     } catch (error) {
       console.error('Failed to get rating summary:', error);
-      throw error;
+      
+      // Return a default empty response if everything fails
+      return [{
+        productId,
+        rating: 0,
+        count: 0,
+        breakdown: {
+          rating5: 0,
+          rating4: 0,
+          rating3: 0,
+          rating2: 0,
+          rating1: 0
+        }
+      }];
     }
   }
   
@@ -153,26 +191,82 @@ export class StampedApiClient {
       formData.append('reviewRecommendProduct', reviewData.reviewRecommendProduct ? 'true' : 'false');
       formData.append('productName', reviewData.productName || '');
       
+      // Essential fields for proper product association
       if (reviewData.productSKU) formData.append('productSKU', reviewData.productSKU);
       if (reviewData.productUrl) formData.append('productUrl', reviewData.productUrl);
       if (reviewData.location) formData.append('location', reviewData.location);
       
+      // Add product handle for proper identification in Stamped's system
+      if (reviewData.productHandle) {
+        formData.append('productHandle', reviewData.productHandle);
+        // Also add as product type to ensure it's linked properly
+        formData.append('productType', reviewData.productHandle);
+      }
+      
       formData.append('reviewSource', 'api');
       
-      const params = new URLSearchParams({
-        apiKey: STAMPED_CONFIG.publicKey,
-        sId: STAMPED_CONFIG.storeHash
-      });
+      // Add shop information to ensure Stamped knows which shop the review belongs to
+      formData.append('storeUrl', STAMPED_CONFIG.storeUrl);
+      if (STAMPED_CONFIG.storeHash) {
+        formData.append('sId', STAMPED_CONFIG.storeHash);
+      }
+      
+      const params = new URLSearchParams();
+      // Only append these if they exist
+      if (STAMPED_CONFIG.publicKey) params.append('apiKey', STAMPED_CONFIG.publicKey);
+      if (STAMPED_CONFIG.storeHash) params.append('sId', STAMPED_CONFIG.storeHash);
       
       const url = `https://stamped.io/api/reviews3?${params.toString()}`;
-      return await this.makeRequest(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': this.basicAuthHeader
-        },
-        body: formData.toString()
-      });
+      
+      // Determine if we need to handle photos
+      if (reviewData.photos && Array.isArray(reviewData.photos) && reviewData.photos.length > 0) {
+        // We need to use a multipart form approach
+        const multipartForm = new FormData();
+        
+        // Add all the fields
+        for (const [key, value] of formData.entries()) {
+          multipartForm.append(key, value);
+        }
+        
+        // Add photos
+        reviewData.photos.forEach((photo: File, index: number) => {
+          multipartForm.append(`photo${index}`, photo);
+        });
+        
+        // Make a special multipart form request
+        return await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Authorization': this.basicAuthHeader
+          },
+          body: multipartForm
+        }).then(async (response) => {
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`API request failed (${response.status}): ${errorText}`);
+            throw new Error(`API request failed with status ${response.status}`);
+          }
+          
+          // For empty responses, return a success indicator
+          if (response.headers.get('content-length') === '0') {
+            return { success: true, id: Date.now().toString() };
+          }
+          
+          return await response.json();
+        });
+      } else {
+        // Regular form submission without photos
+        const result = await this.makeRequest(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': this.basicAuthHeader
+          },
+          body: formData.toString()
+        });
+        
+        return result.success ? { ...result, id: Date.now().toString() } : result;
+      }
     } catch (error) {
       console.error('Failed to submit review:', error);
       throw error;
@@ -180,17 +274,16 @@ export class StampedApiClient {
   }
   
   /**
-   * Skipping auth/check endpoint since it's not working correctly and going directly
-   * to a simple review check to verify API connection
+   * Verify connection to Stamped.io API
    */
   async verifyConnection() {
     try {
-      // Instead of auth/check, use the widget reviews endpoint as a test
-      const params = new URLSearchParams({
-        apiKey: STAMPED_CONFIG.publicKey,
-        sId: STAMPED_CONFIG.storeHash,
-        storeUrl: STAMPED_CONFIG.storeUrl
-      });
+      // Test connection with simple API call
+      const params = new URLSearchParams();
+      // Only append these if they exist
+      if (STAMPED_CONFIG.publicKey) params.append('apiKey', STAMPED_CONFIG.publicKey);
+      if (STAMPED_CONFIG.storeHash) params.append('sId', STAMPED_CONFIG.storeHash);
+      if (STAMPED_CONFIG.storeUrl) params.append('storeUrl', STAMPED_CONFIG.storeUrl);
       
       const url = `https://stamped.io/api/widget/reviews?${params.toString()}`;
       const result = await this.makeRequest(url);

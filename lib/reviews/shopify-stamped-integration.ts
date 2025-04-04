@@ -9,8 +9,8 @@ export class ShopifyStampedIntegration {
   
   constructor() {
     // Set up authentication for Stamped API
-    const username = STAMPED_CONFIG.publicKey;
-    const password = STAMPED_CONFIG.privateKey;
+    const username = STAMPED_CONFIG.publicKey || '';
+    const password = STAMPED_CONFIG.privateKey || '';
     this.basicAuthHeader = `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
   }
   
@@ -40,17 +40,11 @@ export class ShopifyStampedIntegration {
       }
     };
     
-    console.log(`[StampedAPI] Request: ${options.method || 'GET'} ${url}`);
-    
     try {
       const response = await fetch(url, requestOptions);
       const responseText = await response.text();
       
-      console.log(`[StampedAPI] Response Status: ${response.status}`);
-      
       if (!response.ok) {
-        console.error(`[StampedAPI] Error: ${response.status} ${response.statusText}`);
-        console.error(`[StampedAPI] Full Response: ${responseText}`);
         throw new Error(`API request failed with status ${response.status}: ${responseText}`);
       }
       
@@ -58,11 +52,9 @@ export class ShopifyStampedIntegration {
       try {
         return responseText ? JSON.parse(responseText) : {};
       } catch (parseError) {
-        console.error(`[StampedAPI] JSON Parse Error: ${parseError}`);
         return { raw: responseText };
       }
     } catch (error) {
-      console.error(`[StampedAPI] Request Error:`, error);
       throw error;
     }
   }
@@ -71,15 +63,16 @@ export class ShopifyStampedIntegration {
    * Get reviews directly using Stamped.io's productId parameter
    */
   private async getReviewsByProductId(productId: string, page: number = 1, take: number = 50) {
-    const params = new URLSearchParams({
-      productId,
-      sId: STAMPED_CONFIG.storeHash,
-      apiKey: STAMPED_CONFIG.publicKey,
-      page: page.toString(),
-      storeUrl: STAMPED_CONFIG.storeUrl,
-      take: take.toString(),
-      sortReviews: 'recent'
-    });
+    const params = new URLSearchParams();
+    params.append('productId', productId);
+    params.append('page', page.toString());
+    params.append('take', take.toString());
+    params.append('sortReviews', 'recent');
+    
+    // Only append these if they exist
+    if (STAMPED_CONFIG.storeHash) params.append('sId', STAMPED_CONFIG.storeHash);
+    if (STAMPED_CONFIG.publicKey) params.append('apiKey', STAMPED_CONFIG.publicKey);
+    if (STAMPED_CONFIG.storeUrl) params.append('storeUrl', STAMPED_CONFIG.storeUrl);
     
     const url = `https://stamped.io/api/widget/reviews?${params.toString()}`;
     return await this.makeRequest(url);
@@ -89,13 +82,14 @@ export class ShopifyStampedIntegration {
    * Get all reviews for the store
    */
   private async getAllStoreReviews(page: number = 1, take: number = 50) {
-    const params = new URLSearchParams({
-      sId: STAMPED_CONFIG.storeHash,
-      apiKey: STAMPED_CONFIG.publicKey,
-      page: page.toString(),
-      storeUrl: STAMPED_CONFIG.storeUrl,
-      take: take.toString()
-    });
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('take', take.toString());
+    
+    // Only append these if they exist
+    if (STAMPED_CONFIG.storeHash) params.append('sId', STAMPED_CONFIG.storeHash);
+    if (STAMPED_CONFIG.publicKey) params.append('apiKey', STAMPED_CONFIG.publicKey);
+    if (STAMPED_CONFIG.storeUrl) params.append('storeUrl', STAMPED_CONFIG.storeUrl);
     
     const url = `https://stamped.io/api/widget/reviews?${params.toString()}`;
     return await this.makeRequest(url);
@@ -105,26 +99,23 @@ export class ShopifyStampedIntegration {
    * Get reviews by product handle
    */
   async getProductReviewsByProductHandle(productHandle: string, page: number = 1, take: number = 50) {
-    console.log(`[StampedAPI] Looking for reviews with product handle: ${productHandle}`);
-    
     try {
       // First approach: Try searching with the handle as a search term
-      const params = new URLSearchParams({
-        sId: STAMPED_CONFIG.storeHash,
-        apiKey: STAMPED_CONFIG.publicKey,
-        page: page.toString(),
-        storeUrl: STAMPED_CONFIG.storeUrl,
-        take: take.toString(),
-        search: productHandle.replace(/-/g, ' ')  // Convert handle format (dashes) to spaces for search
-      });
+      const params = new URLSearchParams();
+      params.append('page', page.toString());
+      params.append('take', take.toString());
+      params.append('search', productHandle.replace(/-/g, ' ')); // Convert handle format (dashes) to spaces for search
+      
+      // Only append these if they exist
+      if (STAMPED_CONFIG.storeHash) params.append('sId', STAMPED_CONFIG.storeHash);
+      if (STAMPED_CONFIG.publicKey) params.append('apiKey', STAMPED_CONFIG.publicKey);
+      if (STAMPED_CONFIG.storeUrl) params.append('storeUrl', STAMPED_CONFIG.storeUrl);
       
       const url = `https://stamped.io/api/widget/reviews?${params.toString()}`;
       const response = await this.makeRequest(url);
       
       // If we find potential matches, filter them to ensure they're for this specific product
       if (response.data && response.data.length > 0) {
-        console.log(`[StampedAPI] Found ${response.data.length} potential matches for handle: ${productHandle}`);
-        
         // Filter to find reviews that mention this product or have content about this product
         const productTitle = productHandle.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
         const matchingReviews = response.data.filter((review: any) => {
@@ -185,7 +176,6 @@ export class ShopifyStampedIntegration {
         originalTotal: response.data ? response.data.length : 0
       };
     } catch (error) {
-      console.error(`[StampedAPI] Error getting reviews for product handle ${productHandle}:`, error);
       return { 
         data: [], 
         total: 0,
@@ -198,18 +188,12 @@ export class ShopifyStampedIntegration {
    * Filter reviews by looking for product info in various review fields
    */
   private filterReviewsByProductInfo(reviews: any[], shopifyProductId: string, numericId: string) {
-    // For logging
-    let foundByProductId = 0;
-    let foundByTitle = 0;
-    let foundByMessage = 0;
-    
     // Get product title and handle if available
     const productInfo = this.extractProductTitleFromUrl(shopifyProductId);
     
     const filteredReviews = reviews.filter(review => {
       // Check direct productId match first (most reliable)
       if (review.productId && review.productId.toString() === numericId) {
-        foundByProductId++;
         return true;
       }
       
@@ -219,7 +203,6 @@ export class ShopifyStampedIntegration {
         const titleLower = productInfo.title.toLowerCase();
         
         if (productNameLower.includes(titleLower) || titleLower.includes(productNameLower)) {
-          foundByTitle++;
           return true;
         }
       }
@@ -233,12 +216,10 @@ export class ShopifyStampedIntegration {
           const forProduct = messageMatch[1].trim().toLowerCase();
           
           if (productInfo.title && forProduct.includes(productInfo.title.toLowerCase())) {
-            foundByMessage++;
             return true;
           }
           
           if (productInfo.handle && forProduct.includes(productInfo.handle.toLowerCase().replace(/-/g, ' '))) {
-            foundByMessage++;
             return true;
           }
         }
@@ -247,7 +228,6 @@ export class ShopifyStampedIntegration {
       return false;
     });
     
-    console.log(`[StampedAPI] Filtering results: ${foundByProductId} by ID, ${foundByTitle} by title, ${foundByMessage} by message content`);
     return filteredReviews;
   }
   
@@ -280,7 +260,6 @@ export class ShopifyStampedIntegration {
    */
   async getProductReviewsByShopifyId(shopifyProductId: string, page: number = 1, take: number = 50) {
     const numericId = this.extractShopifyNumericId(shopifyProductId);
-    console.log(`[StampedAPI] Looking for reviews with Shopify product ID: ${numericId}`);
     
     try {
       // Extract handle from Shopify ID if available
@@ -288,16 +267,12 @@ export class ShopifyStampedIntegration {
       
       // If we have a handle, try to search by handle first
       if (productInfo.handle) {
-        console.log(`[StampedAPI] Product has handle: ${productInfo.handle}, trying handle search first`);
         const handleResults = await this.getProductReviewsByProductHandle(productInfo.handle, page, take);
         
         // If we found reviews by handle, return them
         if (handleResults.data && handleResults.data.length > 0) {
-          console.log(`[StampedAPI] Found ${handleResults.data.length} reviews by handle search`);
           return handleResults;
         }
-        
-        console.log(`[StampedAPI] No reviews found by handle, falling back to ID search`);
       }
       
       // First, try direct product ID matching
@@ -305,12 +280,10 @@ export class ShopifyStampedIntegration {
       
       // If we find direct matches, return them
       if (directMatches.data && directMatches.data.length > 0) {
-        console.log(`[StampedAPI] Found ${directMatches.data.length} direct matches by product ID`);
         return directMatches;
       }
       
       // If no direct matches, try to get all reviews and then filter them
-      console.log(`[StampedAPI] No direct matches found, attempting to search all reviews`);
       const allReviews = await this.getAllStoreReviews(page, 100); // Get more reviews to search through
       
       // First, try to find reviews by exact productId match
@@ -319,7 +292,6 @@ export class ShopifyStampedIntegration {
       );
       
       if (exactMatches.length > 0) {
-        console.log(`[StampedAPI] Found ${exactMatches.length} matches by exact product ID filtering`);
         return {
           ...allReviews,
           data: exactMatches,
@@ -330,7 +302,6 @@ export class ShopifyStampedIntegration {
       }
       
       // Finally, try fuzzy searching within review content
-      console.log(`[StampedAPI] Attempting fuzzy search in review content...`);
       const reviewsWithProductInfo = this.filterReviewsByProductInfo(allReviews.data, shopifyProductId, numericId);
       
       return {
@@ -341,7 +312,6 @@ export class ShopifyStampedIntegration {
         filtered: true
       };
     } catch (error) {
-      console.error(`[StampedAPI] Error getting reviews for product ${shopifyProductId}:`, error);
       return { 
         data: [], 
         total: 0,
