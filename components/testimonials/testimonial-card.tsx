@@ -15,8 +15,11 @@ interface TestimonialCardProps {
   src: string;
   author: string;
   title: string;
-  followers?: string;
+  followers?: string; // Make it optional with the ? operator
   backgroundImage?: string;
+  isVisible?: boolean;
+  autoplay?: boolean;
+  lazyLoad?: boolean;
 }
 
 export function TestimonialCard({

@@ -13,7 +13,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { collections } from "@/lib/collections";
 import { cn } from "@/lib/utils";
-import { Fish, Grab as Crab, Cookie, Cigarette, Waves } from "lucide-react";
+import { Fish, Grab as Crab, Cookie, Cigarette, Waves, Egg } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { trackLinkClick } from "@/lib/analytics";
 
@@ -32,6 +32,7 @@ const COLLECTION_ICONS: Record<string, any> = {
   crumbed: Cookie,
   smoked: Cigarette,
   "wild-caught": Waves,
+  caviar: Egg,
 };
 
 export function ShopMenu() {
